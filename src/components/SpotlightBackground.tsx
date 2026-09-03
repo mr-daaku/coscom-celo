@@ -108,11 +108,10 @@ export function SpotlightBackground() {
     };
   }, [isMobileLayout]);
 
-  // One image, centered, NEVER tiled (the old `background-repeat: repeat` +
-  // `background-size: 90%` combo rendered 4 tiles on phones). Phones/tablets
-  // stretch a single copy to cover the screen; desktop keeps the original
-  // 90% "framed" look.
-  const imageSize = isMobileLayout ? "cover" : "90%";
+  // One image, centered, NEVER tiled. On phones/tablets the image is scaled to
+  // FIT inside the viewport (`contain`) so it never spills off-screen; desktop
+  // keeps the original 90% "framed" look.
+  const imageSize = isMobileLayout ? "contain" : "90%";
   const revealPct = Math.round(scrollProgress * 100);
 
   const afterMask = isMobileLayout
