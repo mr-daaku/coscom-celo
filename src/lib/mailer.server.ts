@@ -71,6 +71,9 @@ export async function sendMail(opts: {
     }
   }
 
+  return { sent: false, error: "Could not send the email. Please try again." };
+}
+
 
 export function emailShell(opts: {
   heading: string;
