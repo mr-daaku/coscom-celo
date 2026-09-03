@@ -51,6 +51,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
   const [captchaNonce, setCaptchaNonce] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -68,7 +69,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!password) next["password"] = "Password is required";
     else if (isSignup && password.length < 8)
       next["password"] = "Use at least 8 characters";
-    if (!captchaToken) next["captcha"] = "Please complete the security check";
+    if (!captchaToken && !captchaUnavailable)
+      next["captcha"] = "Please complete the security check";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -243,7 +245,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
             <div>
               <span className="mb-2 block text-sm font-medium">Security check</span>
-              <Turnstile onToken={setCaptchaToken} resetKey={captchaNonce} />
+              <Turnstile
+                onToken={setCaptchaToken}
+                onUnavailable={setCaptchaUnavailable}
+                resetKey={captchaNonce}
+              />
               {errors["captcha"] && <FieldError>{errors["captcha"]}</FieldError>}
             </div>
             {!isSignup && (
