@@ -81,7 +81,7 @@ function WorkersPage() {
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link to="/dashboard">Back to dashboard</Link>
+            <Link to="/dashboard" search={{ tab: "overview" }}>Back to dashboard</Link>
           </Button>
         </div>
 

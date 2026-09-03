@@ -55,7 +55,7 @@ export function Header() {
         <div className="hidden items-center gap-2 lg:flex">
           {user ? (
             <Button asChild className="transition-transform hover:scale-[1.02]">
-              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/dashboard" search={{ tab: "overview" }}>Dashboard</Link>
             </Button>
           ) : (
             <>
@@ -103,7 +103,7 @@ export function Header() {
             <div className="mt-2 flex flex-col gap-2">
               {user ? (
                 <Button asChild>
-                  <Link to="/dashboard">Dashboard</Link>
+                  <Link to="/dashboard" search={{ tab: "overview" }}>Dashboard</Link>
                 </Button>
               ) : (
                 <>

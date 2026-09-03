@@ -42,7 +42,7 @@ function CallbackPage() {
 
   useEffect(() => {
     if (state !== "success") return;
-    const t = setTimeout(() => navigate({ to: "/dashboard" }), 1200);
+    const t = setTimeout(() => navigate({ to: "/dashboard", search: { tab: "overview" } }), 1200);
     return () => clearTimeout(t);
   }, [state, navigate]);
 
