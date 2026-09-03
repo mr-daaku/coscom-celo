@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { googleAuthUrl, googleExchange } from "@/lib/google-auth.functions";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 const PRODUCTION_ORIGINS = new Set([
@@ -30,14 +30,31 @@ export const api = {
       supabase.auth.onAuthStateChange(callback),
     signOut: () => supabase.auth.signOut(),
     signInWithGoogle: async () => {
-      const origin = currentOrigin();
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${origin}/auth/google/callback`,
-        extraParams: { prompt: "select_account" },
-      });
-      return { error: result.error ?? null };
+      try {
+        const origin = currentOrigin();
+        const state = crypto.randomUUID();
+        sessionStorage.setItem("coscompay_oauth_state", state);
+        const { url } = await googleAuthUrl({
+          data: { redirectUri: `${origin}/auth/google/callback`, state },
+        });
+        window.location.href = url;
+        return { error: null };
+      } catch (error) {
+        return { error: error instanceof Error ? error : new Error("Google sign-in failed.") };
+      }
     },
-
+    completeGoogleSignIn: async (code: string) => {
+      const origin = currentOrigin();
+      const result = await googleExchange({
+        data: { code, redirectUri: `${origin}/auth/google/callback` },
+      });
+      const { error } = await supabase.auth.verifyOtp({
+        type: "email",
+        token_hash: result.tokenHash,
+      });
+      if (error) throw error;
+      return result;
+    },
   },
   profiles: {
     get: (userId: string) =>
