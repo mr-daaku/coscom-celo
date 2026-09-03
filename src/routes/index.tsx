@@ -348,7 +348,12 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* FEATURES */}
+      <section id="features" className="py-24 md:py-32">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-3xl mb-16" data-reveal>
             <div className="text-sm uppercase tracking-widest text-primary mb-4">Why CosComPay</div>
+
             <h2 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] font-fraunces">
               Built for the next<br />century of money.
             </h2>
