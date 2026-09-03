@@ -46,18 +46,24 @@ function CallbackPage() {
         return;
       }
 
-      const { data, error } = await api.auth.session();
+      const code = params.get("code");
+      const state = params.get("state");
+      const expected = sessionStorage.getItem("coscompay_oauth_state");
+      sessionStorage.removeItem("coscompay_oauth_state");
 
-      if (error || !data.session) {
-        setMessage(error?.message ?? "Google returned without an active session.");
+      if (!code) {
+        setMessage("Google did not return an authorization code.");
+        setState("error");
+        return;
+      }
+      if (expected && state !== expected) {
+        setMessage("Sign-in state mismatch. Please start again.");
         setState("error");
         return;
       }
 
-      const meta = data.session.user.user_metadata as { full_name?: string };
-      setName(
-        (meta.full_name ?? data.session.user.email?.split("@")[0] ?? "there").split(" ")[0] ?? "there",
-      );
+      const result = await api.auth.completeGoogleSignIn(code);
+      setName(result.name?.split(" ")[0] || "there");
       setState("success");
     };
 
