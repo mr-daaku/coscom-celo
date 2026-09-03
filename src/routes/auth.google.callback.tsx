@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { supabase } from "@/integrations/supabase/client";
-import { googleRedirectUri } from "@/lib/auth";
-import { exchangeGoogleCode } from "@/lib/google-auth.functions";
+import { api } from "@/lib/api";
 
 export const Route = createFileRoute("/auth/google/callback")({
   head: () => ({
@@ -36,43 +34,29 @@ function CallbackPage() {
 
     const run = async () => {
       const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
       const oauthError = params.get("error");
 
-      if (oauthError || !code) {
+      if (oauthError) {
         setMessage(
           oauthError === "access_denied"
             ? "You cancelled the Google sign-in."
-            : "No authorization code was returned by Google.",
+            : params.get("error_description") ?? "Google sign-in was not completed.",
         );
         setState("error");
         return;
       }
 
-      const result = await exchangeGoogleCode({
-        data: { code, redirectUri: googleRedirectUri() },
-      });
-
-      if (result.error || !result.tokenHash || !result.email) {
-        setMessage(result.error ?? "Google sign-in failed.");
-        setState("error");
-        return;
-      }
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        type: "magiclink",
-        token_hash: result.tokenHash,
-      });
+      const { data, error } = await api.auth.session();
 
       if (error || !data.session) {
-        setMessage(error?.message ?? "Could not start your session.");
+        setMessage(error?.message ?? "Google returned without an active session.");
         setState("error");
         return;
       }
 
       const meta = data.session.user.user_metadata as { full_name?: string };
       setName(
-        (meta.full_name ?? result.email.split("@")[0] ?? "there").split(" ")[0] ?? "there",
+        (meta.full_name ?? data.session.user.email?.split("@")[0] ?? "there").split(" ")[0] ?? "there",
       );
       setState("success");
     };
