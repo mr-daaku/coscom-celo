@@ -10,8 +10,10 @@ const CORS = {
 
 const bodySchema = z.object({
   amount_usd: z.number().positive().max(1_000_000),
-  coin: z.string().trim().min(2).max(10),
-  chain: z.string().trim().min(2).max(20),
+  /** e.g. "BEP20-USDT", "ERC20-USDT", "TRC20-USDT", "TRX", "BNB" or "ALL-CHAIN-COIN". */
+  asset: z.string().trim().min(2).max(24).optional(),
+  coin: z.string().trim().min(2).max(10).optional(),
+  chain: z.string().trim().min(2).max(20).optional(),
   description: z.string().trim().max(200).optional(),
   customer_email: z.string().trim().email().max(120).optional(),
   metadata: z.record(z.string(), z.string().max(200)).optional(),
