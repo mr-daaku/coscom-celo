@@ -54,17 +54,34 @@ function DocsPage() {
         </section>
 
         <section className="mt-10">
+          <h2 className="font-fraunces text-xl font-bold">Asset codes</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Invoices are created with a single <code className="font-mono">asset</code> code that names the coin{" "}
+            <em>and</em> the network — so <code className="font-mono">BEP20-USDT</code> and{" "}
+            <code className="font-mono">ERC20-USDT</code> are different assets. Pass{" "}
+            <code className="font-mono">ALL-CHAIN-COIN</code> to bill in USD and let the payer choose any supported
+            asset at checkout.
+          </p>
+          <Code>{`BEP20-USDT   ERC20-USDT   TRC20-USDT
+ERC20-USDC   POLYGON-USDC
+BTC   ETH   BASE-ETH   BNB   TRX   SOL   TON   POL
+
+ALL-CHAIN-COIN   // any coin/network, priced in USD`}</Code>
+        </section>
+
+        <section className="mt-10">
           <h2 className="font-fraunces text-xl font-bold">Create a payment</h2>
           <Code>{`curl -X POST https://coscomai.xyz/api/public/v1/payments \\
   -H "Authorization: Bearer $COSCOMPAY_API_KEY" \\
   -H "content-type: application/json" \\
-  -d '{"amount_usd": 49.99, "coin": "USDT", "chain": "TRON", "description": "Order #1024"}'
+  -d '{"amount_usd": 49.99, "asset": "BEP20-USDT", "description": "Order #1024"}'
 
 {
   "reference": "cos_8f2c91a7bd",
   "amount_usd": 49.99,
+  "asset": "BEP20-USDT",
   "coin": "USDT",
-  "chain": "TRON",
+  "chain": "BSC",
   "crypto_amount": 49.99,
   "deposit_address": "T…",
   "status": "pending",
@@ -91,8 +108,7 @@ const pay = new CosComPay(process.env.COSCOMPAY_API_KEY);
 
 const charge = await pay.createPayment({
   amount_usd: 49.99,
-  coin: "USDT",
-  chain: "TRON",
+  asset: "BEP20-USDT", // or "ALL-CHAIN-COIN" to let the payer choose
 });
 
 redirect(charge.checkout_url);
