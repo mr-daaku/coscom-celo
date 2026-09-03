@@ -17,7 +17,7 @@ import {
   type PlanOrderDTO,
   updateMerchantSettings,
 } from "@/lib/gateway.functions";
-import { ALL_CHAIN_CODE, ASSET_CODES } from "@/lib/assets";
+import { ALL_CHAIN_CODE, ANY_ASSET, ASSET_CODES, assetCodeOf } from "@/lib/assets";
 import { PLAN_LIST, money } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
@@ -181,8 +181,8 @@ export function ChargesTab() {
               <tr key={c.id} className="border-b border-border/60 last:border-0">
                 <td className="p-4 font-mono text-xs">{c.reference}</td>
                 <td className="p-4">{money(Number(c.amount_usd))}</td>
-                <td className="p-4">
-                  {c.coin} · {c.chain}
+                <td className="p-4 font-mono text-xs">
+                  {c.coin === ANY_ASSET ? `${ALL_CHAIN_CODE} (awaiting choice)` : assetCodeOf(c.coin, c.chain)}
                 </td>
                 <td className="p-4">{money(Number(c.fee_usd))}</td>
                 <td className="p-4">{money(Number(c.net_usd))}</td>
