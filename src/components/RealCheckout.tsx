@@ -6,8 +6,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getPaymentByReference, submitPaymentTx } from "@/lib/gateway.functions";
+import { getPaymentByReference, selectPaymentAsset, submitPaymentTx } from "@/lib/gateway.functions";
 import { NETWORK_COLORS } from "@/lib/coscom";
+import { ASSET_CODES, ANY_ASSET } from "@/lib/assets";
 
 type Payment = {
   reference: string;
@@ -32,6 +33,15 @@ export function RealCheckout({ reference }: { reference: string }) {
     retry: false,
     refetchInterval: 15_000,
     queryFn: async () => (await getPaymentByReference({ data: { reference } })) as unknown as Payment,
+  });
+
+  const choose = useMutation({
+    mutationFn: (asset: string) => selectPaymentAsset({ data: { reference, asset } }),
+    onSuccess: () => {
+      setError(null);
+      void payment.refetch();
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : "Could not select that asset"),
   });
 
   const submit = useMutation({
@@ -90,7 +100,34 @@ export function RealCheckout({ reference }: { reference: string }) {
           )}
         </div>
 
-        {settled ? (
+        {!settled && p.coin === ANY_ASSET ? (
+          <div className="mt-6">
+            <p className="text-sm font-medium">Choose how you want to pay</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              This invoice accepts any supported coin or network. Pick one to get a deposit address.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {ASSET_CODES.map((a) => (
+                <button
+                  key={a.code}
+                  type="button"
+                  disabled={choose.isPending}
+                  onClick={() => choose.mutate(a.code)}
+                  className="rounded-xl border border-border bg-muted/40 p-3 text-left transition-colors hover:border-primary disabled:opacity-60"
+                >
+                  <p className="font-mono text-xs font-bold">{a.code}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{a.label}</p>
+                </button>
+              ))}
+            </div>
+            {choose.isPending && (
+              <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" /> Preparing your deposit address…
+              </p>
+            )}
+            {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+          </div>
+        ) : settled ? (
           <div className="mt-8 text-center">
             <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-primary/15">
               <Check className="size-7 text-primary" />
