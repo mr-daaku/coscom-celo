@@ -17,6 +17,7 @@ import {
   type PlanOrderDTO,
   updateMerchantSettings,
 } from "@/lib/gateway.functions";
+import { ALL_CHAIN_CODE, ANY_ASSET, ASSET_CODES, assetCodeOf } from "@/lib/assets";
 import { PLAN_LIST, money } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +71,7 @@ export function ChargesTab() {
   const qc = useQueryClient();
   const overview = useOverview();
   const [amount, setAmount] = useState("49.99");
-  const [pair, setPair] = useState(0);
+  const [assetCode, setAssetCode] = useState("TRC20-USDT");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
@@ -95,12 +96,10 @@ export function ChargesTab() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const selected = PAIRS[pair]!;
       return createPayment({
         data: {
           amount_usd: Number(amount),
-          coin: selected.coin,
-          chain: selected.chain,
+          asset: assetCode,
           ...(note ? { description: note } : {}),
         },
       });
@@ -131,16 +130,17 @@ export function ChargesTab() {
             <Input id="amt" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </div>
           <div>
-            <Label htmlFor="pair">Coin / network</Label>
+            <Label htmlFor="asset">Asset code</Label>
             <select
-              id="pair"
-              value={pair}
-              onChange={(e) => setPair(Number(e.target.value))}
+              id="asset"
+              value={assetCode}
+              onChange={(e) => setAssetCode(e.target.value)}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             >
-              {PAIRS.map((p, i) => (
-                <option key={`${p.coin}-${p.chain}`} value={i}>
-                  {p.coin} · {p.chain}
+              <option value={ALL_CHAIN_CODE}>{ALL_CHAIN_CODE} — payer picks any coin</option>
+              {ASSET_CODES.map((a) => (
+                <option key={a.code} value={a.code}>
+                  {a.code} — {a.label}
                 </option>
               ))}
             </select>
@@ -181,8 +181,8 @@ export function ChargesTab() {
               <tr key={c.id} className="border-b border-border/60 last:border-0">
                 <td className="p-4 font-mono text-xs">{c.reference}</td>
                 <td className="p-4">{money(Number(c.amount_usd))}</td>
-                <td className="p-4">
-                  {c.coin} · {c.chain}
+                <td className="p-4 font-mono text-xs">
+                  {c.coin === ANY_ASSET ? `${ALL_CHAIN_CODE} (awaiting choice)` : assetCodeOf(c.coin, c.chain)}
                 </td>
                 <td className="p-4">{money(Number(c.fee_usd))}</td>
                 <td className="p-4">{money(Number(c.net_usd))}</td>

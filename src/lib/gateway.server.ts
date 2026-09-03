@@ -40,6 +40,15 @@ export function assetFor(coin: string, chain: string) {
   );
 }
 
+export {
+  ALL_CHAIN_CODE,
+  ANY_ADDRESS,
+  ANY_ASSET,
+  ASSET_CODES,
+  assetCodeOf,
+  resolveAssetCode,
+} from "./assets";
+
 const FALLBACK_PRICES: Record<string, number> = {
   bitcoin: 112480,
   ethereum: 4284,
