@@ -1,25 +1,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  RefreshCw,
-  User,
-} from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SpotlightBackground } from "@/components/SpotlightBackground";
+import { Turnstile } from "@/components/site/Turnstile";
 import logo from "@/assets/logo.png";
+import { verifyCaptcha } from "@/lib/captcha.functions";
 import {
   resetPassword,
   signInWithEmail,
   signInWithGoogle,
   signUpWithEmail,
 } from "@/lib/auth";
+
 
 function GoogleMark() {
   return (
@@ -44,8 +38,6 @@ function GoogleMark() {
   );
 }
 
-const CAPTCHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
 function FieldError({ children }: { children: ReactNode }) {
   return (
     <p className="mt-1.5 flex items-center gap-1 text-sm text-destructive">
@@ -62,26 +54,15 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [captcha, setCaptcha] = useState("");
-  const [captchaText, setCaptchaText] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const generateCaptcha = useCallback(() => {
-    let out = "";
-    for (let i = 0; i < 6; i += 1) {
-      out += CAPTCHA_CHARS.charAt(Math.floor(Math.random() * CAPTCHA_CHARS.length));
-    }
-    setCaptchaText(out);
-    setCaptcha("");
-  }, []);
-
-  useEffect(() => {
-    generateCaptcha();
-  }, [generateCaptcha]);
+  const resetCaptcha = () => setCaptchaNonce((n) => n + 1);
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -91,9 +72,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!password) next["password"] = "Password is required";
     else if (isSignup && password.length < 8)
       next["password"] = "Use at least 8 characters";
-    if (!captcha) next["captcha"] = "Please enter the captcha";
-    else if (captcha.toLowerCase() !== captchaText.toLowerCase())
-      next["captcha"] = "Invalid captcha";
+    if (!captchaToken) next["captcha"] = "Please complete the security check";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -104,6 +83,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!validate()) return;
 
     setBusy(true);
+    const captcha = await verifyCaptcha({ data: { token: captchaToken ?? "" } });
+    if (!captcha.ok) {
+      setBusy(false);
+      resetCaptcha();
+      setErrors({ captcha: captcha.error ?? "Captcha check failed." });
+      return;
+    }
+
     if (isSignup) {
       const { error, needsConfirmation } = await signUpWithEmail(
         email.trim(),
@@ -112,7 +99,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       );
       setBusy(false);
       if (error) {
-        generateCaptcha();
+        resetCaptcha();
         setErrors({ form: error.message });
         return;
       }
@@ -126,7 +113,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       const { error } = await signInWithEmail(email.trim(), password);
       setBusy(false);
       if (error) {
-        generateCaptcha();
+        resetCaptcha();
         setErrors({ form: error.message });
         return;
       }
@@ -155,6 +142,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (error) setErrors({ form: error.message });
     else setNotice("Password reset link sent. Check your inbox.");
   };
+
+
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
@@ -260,32 +249,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             </div>
 
             <div>
-              <label htmlFor="captcha" className="mb-2 block text-sm font-medium">
-                Security check
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="select-none rounded-xl border border-border bg-muted px-4 py-3 font-mono text-base tracking-[0.35em] text-foreground">
-                  {captchaText}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Refresh captcha"
-                  onClick={generateCaptcha}
-                  className="rounded-xl border border-border p-3 text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <RefreshCw className="size-4" />
-                </button>
-                <input
-                  id="captcha"
-                  name="captcha"
-                  value={captcha}
-                  onChange={(e) => setCaptcha(e.target.value)}
-                  placeholder="Type the code"
-                  className="min-w-0 flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                />
-              </div>
+              <span className="mb-2 block text-sm font-medium">Security check</span>
+              <Turnstile onToken={setCaptchaToken} resetKey={captchaNonce} />
               {errors["captcha"] && <FieldError>{errors["captcha"]}</FieldError>}
             </div>
+
 
             {!isSignup && (
               <button
