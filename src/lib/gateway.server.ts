@@ -40,113 +40,14 @@ export function assetFor(coin: string, chain: string) {
   );
 }
 
-/**
- * Human friendly asset codes merchants pass when creating an invoice, e.g.
- * `BEP20-USDT`, `ERC20-USDT`, `TRC20-USDT`, `TRX`, `BNB`.
- * `ALL-CHAIN-COIN` creates a USD invoice where the payer picks any supported asset.
- */
-export const ALL_CHAIN_CODE = "ALL-CHAIN-COIN";
-
-export const ASSET_CODES: { code: string; label: string; coin: string; chain: string }[] = [
-  { code: "BEP20-USDT", label: "USDT · BNB Smart Chain (BEP-20)", coin: "USDT", chain: "BSC" },
-  { code: "ERC20-USDT", label: "USDT · Ethereum (ERC-20)", coin: "USDT", chain: "Ethereum" },
-  { code: "TRC20-USDT", label: "USDT · TRON (TRC-20)", coin: "USDT", chain: "TRON" },
-  { code: "ERC20-USDC", label: "USDC · Ethereum (ERC-20)", coin: "USDC", chain: "Ethereum" },
-  { code: "POLYGON-USDC", label: "USDC · Polygon", coin: "USDC", chain: "Polygon" },
-  { code: "BNB", label: "BNB · BNB Smart Chain", coin: "BNB", chain: "BSC" },
-  { code: "ETH", label: "ETH · Ethereum", coin: "ETH", chain: "Ethereum" },
-  { code: "BASE-ETH", label: "ETH · Base", coin: "ETH", chain: "Base" },
-  { code: "BTC", label: "BTC · Bitcoin", coin: "BTC", chain: "Bitcoin" },
-  { code: "TRX", label: "TRX · TRON", coin: "TRX", chain: "TRON" },
-  { code: "SOL", label: "SOL · Solana", coin: "SOL", chain: "Solana" },
-  { code: "TON", label: "TON · The Open Network", coin: "TON", chain: "TON" },
-  { code: "POL", label: "POL · Polygon", coin: "POL", chain: "Polygon" },
-];
-
-/** Marker stored on invoices that are not bound to one asset yet. */
-export const ANY_ASSET = "ANY";
-export const ANY_ADDRESS = "pending-selection";
-
-function normalizeCode(input: string) {
-  const code = input.trim().toUpperCase().replace(/[\s_]+/g, "-");
-  const aliases: Record<string, string> = {
-    "ALLCHAIN": ALL_CHAIN_CODE,
-    "ALL-CHAIN": ALL_CHAIN_CODE,
-    "ALL-COIN": ALL_CHAIN_CODE,
-    "ALL-CHAIN-COIN": ALL_CHAIN_CODE,
-    ANY: ALL_CHAIN_CODE,
-    "USDT-BEP20": "BEP20-USDT",
-    "USDT-ERC20": "ERC20-USDT",
-    "USDT-TRC20": "TRC20-USDT",
-    "USDC-ERC20": "ERC20-USDC",
-    "USDC-POLYGON": "POLYGON-USDC",
-    "MATIC-USDC": "POLYGON-USDC",
-    "TRC20-TRX": "TRX",
-    "BEP20-BNB": "BNB",
-    "ERC20-ETH": "ETH",
-    "SPL-SOL": "SOL",
-    MATIC: "POL",
-    USDT: "TRC20-USDT",
-    USDC: "ERC20-USDC",
-  };
-  return aliases[code] ?? code;
-}
-
-/** Resolve an asset code. Returns "any" for the all-chain invoice type. */
-export function resolveAssetCode(
-  input: string,
-): { kind: "any" } | { kind: "asset"; coin: string; chain: string; code: string } {
-  const code = normalizeCode(input);
-  if (code === ALL_CHAIN_CODE) return { kind: "any" };
-  const found = ASSET_CODES.find((a) => a.code === code);
-  if (!found) {
-    throw new Error(
-      `Unknown asset code "${input}". Use one of: ${ASSET_CODES.map((a) => a.code).join(", ")}, ${ALL_CHAIN_CODE}.`,
-    );
-  }
-  return { kind: "asset", coin: found.coin, chain: found.chain, code: found.code };
-}
-
-export function assetCodeOf(coin: string, chain: string) {
-  return (
-    ASSET_CODES.find(
-      (a) => a.coin.toUpperCase() === coin.toUpperCase() && a.chain.toLowerCase() === chain.toLowerCase(),
-    )?.code ?? `${coin}-${chain}`.toUpperCase()
-  );
-}
-
-const FALLBACK_PRICES: Record<string, number> = {
-  bitcoin: 112480,
-  ethereum: 4284,
-  tether: 1,
-  "usd-coin": 1,
-  binancecoin: 600,
-  solana: 178.4,
-  tron: 0.28,
-  "the-open-network": 5.3,
-  "matic-network": 0.42,
-};
-
-const priceCache = new Map<string, { value: number; at: number }>();
-
-export async function priceUsd(cgId: string): Promise<number> {
-  const cached = priceCache.get(cgId);
-  if (cached && Date.now() - cached.at < 60_000) return cached.value;
-  try {
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(cgId)}&vs_currencies=usd`,
-      { headers: { accept: "application/json" } },
-    );
-    if (!res.ok) throw new Error(`price HTTP ${res.status}`);
-    const json = (await res.json()) as Record<string, { usd?: number }>;
-    const value = json[cgId]?.usd;
-    if (!value || !Number.isFinite(value)) throw new Error("no price");
-    priceCache.set(cgId, { value, at: Date.now() });
-    return value;
-  } catch {
-    return FALLBACK_PRICES[cgId] ?? 1;
-  }
-}
+export {
+  ALL_CHAIN_CODE,
+  ANY_ADDRESS,
+  ANY_ASSET,
+  ASSET_CODES,
+  assetCodeOf,
+  resolveAssetCode,
+} from "./assets";
 
 /** Deposit address for a chain: merchant wallet first, platform address second. */
 export async function depositAddress(userId: string, chain: string): Promise<string> {
