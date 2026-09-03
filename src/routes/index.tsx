@@ -1,428 +1,452 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeftRight,
-  BadgeCheck,
-  Check,
-  ChevronRight,
-  Clock,
-  Copy,
-  Loader2,
-  ShieldCheck,
-  Wallet,
+  ArrowRight,
+  Boxes,
+  CheckCircle2,
+  Code2,
+  Coins,
+  FileCode2,
+  Globe,
+  Lock,
+  Repeat,
+  Timer,
+  Webhook,
+  Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { CheckoutDemo } from "@/components/CheckoutDemo";
+import { SpotlightBackground, useScrollReveal } from "@/components/SpotlightBackground";
+import { Header } from "@/components/site/Header";
+import { Footer } from "@/components/site/Footer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CoinRail — Crypto-Only Payment Gateway Checkout" },
+      { title: "CosComPay — Crypto Payment Gateway for Merchants" },
       {
         name: "description",
         content:
-          "Accept BTC, ETH, USDT and SOL payments with a crypto-only checkout: live rates, QR pay, wallet deep links, and confirmation tracking on mobile and desktop.",
+          "CosComPay is the gateway to crypto commerce: accept Bitcoin, Ethereum, stablecoins and 50+ chains with one API, instant settlement and zero chargebacks.",
       },
-      { property: "og:title", content: "CoinRail — Crypto-Only Payment Gateway" },
+      { property: "og:title", content: "CosComPay — The gateway to crypto commerce" },
       {
         property: "og:description",
         content:
-          "A crypto-only checkout flow with QR pay, live conversion, and on-chain confirmation tracking.",
+          "Accept Bitcoin, Ethereum, stablecoins and 50+ chains with one integration. Instant settlement, non-custodial, zero chargebacks.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: CheckoutPage,
+  component: LandingPage,
 });
 
-type Coin = {
-  id: string;
-  name: string;
-  symbol: string;
-  network: string;
-  rate: number; // USD per unit
-  decimals: number;
-  uriScheme: string;
-  address: string;
-  confirmations: number;
-};
+const LOGOS = ["Binance", "Stripe", "Coinbase", "Shopify", "WooCommerce", "Webflow"];
 
-const COINS: Coin[] = [
+const FEATURES = [
   {
-    id: "btc",
-    name: "Bitcoin",
-    symbol: "BTC",
-    network: "Bitcoin",
-    rate: 96420,
-    decimals: 8,
-    uriScheme: "bitcoin",
-    address: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
-    confirmations: 2,
+    icon: Timer,
+    title: "Instant settlement",
+    body: "Funds land in your wallet as soon as the network confirms — no 7-day holds, no rolling reserves.",
+    span: "lg:col-span-2",
+    stats: [
+      ["~10s", "BTC confirm"],
+      ["~15s", "ETH confirm"],
+      ["0%", "Chargebacks"],
+    ],
   },
   {
-    id: "eth",
-    name: "Ethereum",
-    symbol: "ETH",
-    network: "ERC-20",
-    rate: 3180,
-    decimals: 6,
-    uriScheme: "ethereum",
-    address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    confirmations: 12,
+    icon: Code2,
+    title: "One-line integration",
+    body: "Drop in a hosted checkout link or call the API directly. Server SDKs for every major language.",
+    span: "",
   },
   {
-    id: "usdt",
-    name: "Tether",
-    symbol: "USDT",
-    network: "TRC-20",
-    rate: 1,
-    decimals: 2,
-    uriScheme: "tron",
-    address: "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE",
-    confirmations: 20,
+    icon: Boxes,
+    title: "50+ chains, 1 API",
+    body: "Bitcoin, Ethereum, TRON, Solana, BNB Chain, Polygon, TON and every major stablecoin.",
+    span: "",
   },
   {
-    id: "sol",
-    name: "Solana",
-    symbol: "SOL",
-    network: "Solana",
-    rate: 178.4,
-    decimals: 4,
-    uriScheme: "solana",
-    address: "7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj",
-    confirmations: 1,
+    icon: Repeat,
+    title: "Settle how you want",
+    body: "Keep crypto, auto-convert to stablecoins, or split settlement across treasury wallets.",
+    span: "",
+  },
+  {
+    icon: Lock,
+    title: "Non-custodial",
+    body: "Payments route straight to keys you control. We never hold merchant funds.",
+    span: "",
   },
 ];
 
-const STEPS = ["Amount", "Pay", "Confirming"] as const;
+const CHECKOUT_POINTS = [
+  "Live rates locked for 30 minutes at checkout",
+  "QR codes and wallet deep links on every device",
+  "Automatic underpayment and overpayment handling",
+  "Localised in 24 languages with your brand colours",
+];
 
-function CheckoutPage() {
-  const [amountUsd, setAmountUsd] = useState("149.00");
-  const [coin, setCoin] = useState<Coin>(COINS[0]!);
-  const [step, setStep] = useState(0);
-  const [copied, setCopied] = useState<"address" | "amount" | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(15 * 60);
-  const [confirmations, setConfirmations] = useState(0);
+const DEV_POINTS = [
+  { icon: FileCode2, title: "Node · Python · Go · PHP", body: "Typed SDKs and copy-paste snippets." },
+  { icon: Webhook, title: "Signed webhooks", body: "HMAC-signed events with automatic retries." },
+  { icon: Globe, title: "Sandbox testnets", body: "Full testnet parity before you go live." },
+  { icon: Coins, title: "OpenAPI schema", body: "Generate your own client in seconds." },
+];
 
-  const usd = Number.parseFloat(amountUsd) || 0;
-  const cryptoAmount = useMemo(
-    () => (usd / coin.rate).toFixed(coin.decimals),
-    [usd, coin],
-  );
-  const payUri = `${coin.uriScheme}:${coin.address}?amount=${cryptoAmount}`;
+const PRICING = [
+  {
+    name: "Starter",
+    fee: "0.5%",
+    blurb: "For new stores finding their first crypto customers.",
+    perks: ["Hosted checkout", "10 chains", "Email support", "Sandbox access"],
+    popular: false,
+  },
+  {
+    name: "Growth",
+    fee: "0.4%",
+    blurb: "For scaling merchants with real crypto volume.",
+    perks: ["50+ chains", "Auto-convert to stables", "Signed webhooks", "Priority support"],
+    popular: true,
+  },
+  {
+    name: "Enterprise",
+    fee: "Custom",
+    blurb: "For platforms and marketplaces at scale.",
+    perks: ["Volume pricing", "Dedicated infra", "SLA & audits", "Solutions engineer"],
+    popular: false,
+  },
+];
 
-  useEffect(() => {
-    if (step !== 1) return;
-    const t = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
-  }, [step]);
+const FAQS = [
+  {
+    q: "Which cryptocurrencies can I accept?",
+    a: "Bitcoin, Ethereum, TRON, Solana, BNB Chain, Polygon, TON and 50+ assets including USDT, USDC and DAI across every supported chain.",
+  },
+  {
+    q: "Do you hold my funds?",
+    a: "No. CosComPay is non-custodial — payments settle directly into wallets whose keys you control. We only observe the chain and notify your systems.",
+  },
+  {
+    q: "What happens if a customer underpays?",
+    a: "The checkout detects the shortfall, shows the remaining balance, and either accepts a top-up within the payment window or issues an automatic refund minus network fees.",
+  },
+  {
+    q: "How do exchange rates work?",
+    a: "We aggregate rates from multiple venues and lock a quote for 30 minutes at checkout. Your invoice is settled at the locked rate regardless of market movement.",
+  },
+  {
+    q: "Are there chargebacks?",
+    a: "On-chain payments are final, so there are no card-style chargebacks. You can still issue refunds from the dashboard or API at any time.",
+  },
+];
 
-  useEffect(() => {
-    if (step !== 2) return;
-    setConfirmations(0);
-    const t = setInterval(
-      () => setConfirmations((c) => Math.min(coin.confirmations, c + 1)),
-      1200,
-    );
-    return () => clearInterval(t);
-  }, [step, coin.confirmations]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const t = setTimeout(() => setCopied(null), 1600);
-    return () => clearTimeout(t);
-  }, [copied]);
-
-  const copy = async (value: string, what: "address" | "amount") => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(what);
-    } catch {
-      setCopied(null);
-    }
-  };
-
-  const mmss = `${String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:${String(
-    secondsLeft % 60,
-  ).padStart(2, "0")}`;
-  const settled = step === 2 && confirmations >= coin.confirmations;
+function LandingPage() {
+  useScrollReveal();
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-10 lg:py-12">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3 lg:mb-10">
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Wallet className="size-5" />
-            </span>
-            <div>
-              <p className="font-display text-lg leading-none font-bold tracking-tight">
-                CoinRail
-              </p>
-              <p className="text-xs text-muted-foreground">Crypto-only gateway</p>
-            </div>
-          </div>
-          <Badge variant="outline" className="gap-1.5 border-primary/40 text-primary">
-            <ShieldCheck className="size-3.5" /> Non-custodial · No cards
-          </Badge>
-        </header>
+    <div className="relative">
+      <SpotlightBackground />
+      <Header />
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_22rem] lg:gap-8">
-          {/* Main panel */}
-          <section className="rounded-3xl border bg-card/70 p-4 backdrop-blur sm:p-6 lg:p-8">
-            <ol className="mb-6 flex items-center gap-2 text-xs sm:text-sm">
-              {STEPS.map((label, i) => (
-                <li key={label} className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "flex items-center gap-2 rounded-full px-3 py-1.5 font-medium transition-colors",
-                      i === step
-                        ? "bg-primary text-primary-foreground"
-                        : i < step
-                          ? "bg-primary/15 text-primary"
-                          : "bg-secondary text-muted-foreground",
-                    )}
-                  >
-                    {i < step ? <Check className="size-3.5" /> : <span>{i + 1}</span>}
-                    {label}
-                  </span>
-                  {i < STEPS.length - 1 && (
-                    <ChevronRight className="size-4 text-muted-foreground" />
-                  )}
+      {/* Hero */}
+      <section className="mx-auto flex min-h-[90vh] max-w-7xl flex-col justify-center gap-12 px-4 py-16 sm:px-6 lg:flex-row lg:items-center lg:px-8">
+        <div className="flex-1" data-reveal>
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs text-primary">
+            <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+            Mainnet live · 50+ chains supported
+          </span>
+          <h1 className="mt-6 font-fraunces text-5xl leading-[1.05] font-bold tracking-tight sm:text-6xl lg:text-7xl">
+            The gateway to crypto commerce.
+          </h1>
+          <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
+            Accept Bitcoin, Ethereum, stablecoins and 50+ cryptocurrencies with one
+            integration. Instant settlement, non-custodial custody, zero chargebacks.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild size="lg" className="h-12 gap-2 transition-transform hover:scale-[1.02]">
+              <Link to="/signup">
+                Get started <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12">
+              <a href="#features">See features</a>
+            </Button>
+          </div>
+          <dl className="mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-border pt-8">
+            {[
+              ["$2.4B", "Processed"],
+              ["12,800+", "Merchants"],
+              ["142", "Countries"],
+            ].map(([value, label]) => (
+              <div key={label}>
+                <dt className="font-fraunces text-2xl font-bold">{value}</dt>
+                <dd className="text-xs text-muted-foreground">{label}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="w-full flex-1 lg:max-w-md" data-reveal>
+          <CheckoutDemo />
+        </div>
+      </section>
+
+      {/* Trusted by */}
+      <section className="border-y border-border bg-card/30 py-8 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-4 px-4">
+          {LOGOS.map((logo, i) => (
+            <span
+              key={logo}
+              className={`text-lg text-muted-foreground/60 ${
+                i % 2 === 0 ? "font-fraunces font-semibold" : "font-medium"
+              }`}
+            >
+              {logo}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-24 sm:px-6 lg:px-8">
+        <div className="max-w-2xl" data-reveal>
+          <h2 className="font-fraunces text-3xl font-bold tracking-tight sm:text-5xl">
+            Built for the next century of money.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Everything you need to take crypto from a checkbox to a channel.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          {FEATURES.map((f) => (
+            <div
+              key={f.title}
+              data-reveal
+              className={`rounded-3xl border border-border bg-card/90 p-6 backdrop-blur-xl ${f.span}`}
+            >
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <f.icon className="size-5" />
+              </span>
+              <h3 className="mt-5 font-fraunces text-lg font-semibold">{f.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
+              {f.stats && (
+                <div className="mt-6 grid grid-cols-3 gap-4 border-t border-border pt-5">
+                  {f.stats.map(([value, label]) => (
+                    <div key={label}>
+                      <p className="font-fraunces text-xl font-bold text-primary">{value}</p>
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Checkout demo */}
+      <section
+        id="checkout"
+        className="mx-auto max-w-7xl scroll-mt-20 px-4 py-24 sm:px-6 lg:px-8"
+      >
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div data-reveal>
+            <h2 className="font-fraunces text-3xl font-bold tracking-tight sm:text-5xl">
+              The checkout your customers will love.
+            </h2>
+            <ul className="mt-8 space-y-4">
+              {CHECKOUT_POINTS.map((point) => (
+                <li key={point} className="flex gap-3 text-sm text-muted-foreground">
+                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+                  {point}
                 </li>
               ))}
-            </ol>
+            </ul>
+            <Button asChild className="mt-8 gap-2">
+              <Link to="/pay">
+                Try the hosted checkout <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
+          <div data-reveal>
+            <CheckoutDemo amount={129} />
+          </div>
+        </div>
+      </section>
 
-            {step === 0 && (
-              <div className="space-y-6">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                    Pay with crypto
-                  </h1>
-                  <p className="mt-1.5 text-sm text-muted-foreground">
-                    Choose a coin and network. Rates lock for 15 minutes at checkout.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Order amount (USD)</Label>
-                  <div className="relative">
-                    <span className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
-                      $
-                    </span>
-                    <Input
-                      id="amount"
-                      inputMode="decimal"
-                      value={amountUsd}
-                      onChange={(e) => setAmountUsd(e.target.value)}
-                      className="h-12 pl-7 font-display text-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Select asset</Label>
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                    {COINS.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setCoin(c)}
-                        className={cn(
-                          "rounded-2xl border p-3 text-left transition-all",
-                          coin.id === c.id
-                            ? "border-primary bg-primary/10 ring-1 ring-primary"
-                            : "bg-secondary/40 hover:border-primary/50",
-                        )}
-                      >
-                        <p className="font-display text-base font-bold">{c.symbol}</p>
-                        <p className="truncate text-xs text-muted-foreground">{c.name}</p>
-                        <p className="mt-1.5 text-[11px] text-primary">{c.network}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl bg-secondary/50 p-4 text-sm">
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    <ArrowLeftRight className="size-4" /> You send
-                  </span>
-                  <span className="font-display text-base font-bold">
-                    {cryptoAmount} {coin.symbol}
-                  </span>
-                </div>
-
-                <Button
-                  size="lg"
-                  className="h-12 w-full text-base"
-                  disabled={usd <= 0}
-                  onClick={() => {
-                    setSecondsLeft(15 * 60);
-                    setStep(1);
-                  }}
-                >
-                  Continue to payment
-                </Button>
-              </div>
-            )}
-
-            {step === 1 && (
-              <div className="grid gap-6 sm:grid-cols-[auto_1fr] sm:items-start">
-                <div className="mx-auto rounded-2xl bg-white p-3 sm:mx-0">
-                  <QRCodeSVG value={payUri} size={168} level="M" />
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-                      Send exactly {cryptoAmount} {coin.symbol}
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {coin.network} network only. Other networks will be lost.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Deposit address</Label>
-                    <div className="flex items-center gap-2 rounded-xl border bg-secondary/40 p-2.5">
-                      <code className="min-w-0 flex-1 truncate text-xs sm:text-sm">
-                        {coin.address}
-                      </code>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        aria-label="Copy address"
-                        onClick={() => copy(coin.address, "address")}
-                      >
-                        {copied === "address" ? (
-                          <Check className="size-4 text-primary" />
-                        ) : (
-                          <Copy className="size-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <Badge variant="secondary" className="gap-1.5">
-                      <Clock className="size-3.5" /> Rate locked {mmss}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copy(cryptoAmount, "amount")}
-                    >
-                      {copied === "amount" ? "Amount copied" : "Copy amount"}
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Button asChild className="h-11 flex-1">
-                      <a href={payUri}>Open in wallet</a>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-11 flex-1"
-                      onClick={() => setStep(2)}
-                    >
-                      I've sent the payment
-                    </Button>
-                  </div>
-                  <button
-                    type="button"
-                    className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-                    onClick={() => setStep(0)}
-                  >
-                    Change amount or asset
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="space-y-6 py-4 text-center">
-                <span
-                  className={cn(
-                    "mx-auto flex size-16 items-center justify-center rounded-2xl",
-                    settled ? "bg-primary text-primary-foreground" : "bg-secondary",
-                  )}
-                >
-                  {settled ? (
-                    <BadgeCheck className="size-8" />
-                  ) : (
-                    <Loader2 className="size-8 animate-spin text-primary" />
-                  )}
-                </span>
-                <div>
-                  <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-                    {settled ? "Payment confirmed" : "Waiting for confirmations"}
-                  </h1>
-                  <p className="mt-1.5 text-sm text-muted-foreground">
-                    {confirmations}/{coin.confirmations} confirmations on {coin.network}
-                  </p>
-                </div>
-                <div className="mx-auto h-2 w-full max-w-sm overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{
-                      width: `${(confirmations / coin.confirmations) * 100}%`,
-                    }}
-                  />
-                </div>
-                <Button variant="outline" onClick={() => setStep(0)}>
-                  Start a new payment
-                </Button>
-              </div>
-            )}
-          </section>
-
-          {/* Order summary */}
-          <aside className="rounded-3xl border bg-card/70 p-5 backdrop-blur sm:p-6 lg:sticky lg:top-12">
-            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-              Order summary
-            </h2>
-            <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Subtotal</dt>
-                <dd>${usd.toFixed(2)}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Network fee</dt>
-                <dd className="text-primary">Paid by sender</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Asset</dt>
-                <dd>
-                  {coin.symbol} · {coin.network}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Rate</dt>
-                <dd>
-                  1 {coin.symbol} = ${coin.rate.toLocaleString()}
-                </dd>
-              </div>
-            </dl>
-            <Separator className="my-4" />
-            <div className="flex items-end justify-between gap-4">
-              <span className="text-sm text-muted-foreground">Total due</span>
-              <span className="font-display text-xl font-bold">
-                {cryptoAmount} {coin.symbol}
+      {/* Developers */}
+      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div
+            data-reveal
+            className="overflow-hidden rounded-3xl border border-border bg-[#0b0e0e]"
+          >
+            <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+              <span className="size-3 rounded-full bg-destructive/70" />
+              <span className="size-3 rounded-full bg-warning/70" />
+              <span className="size-3 rounded-full bg-primary/70" />
+              <span className="ml-3 font-mono text-xs text-muted-foreground">
+                accept-crypto.ts
               </span>
             </div>
-            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              Crypto payments are final. Always verify the address and network before
-              sending funds.
+            <pre className="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted-foreground">
+              <code>{`import { CosComPay } from "coscompay";
+
+const pay = new CosComPay(process.env.CMP_SECRET_KEY);
+
+const session = await pay.checkout.create({
+  amount: 249_00,
+  currency: "usd",
+  accept: ["BTC", "ETH", "USDT"],
+  success_url: "https://acme.com/thanks",
+});
+
+return Response.redirect(session.url);`}</code>
+            </pre>
+          </div>
+
+          <div data-reveal>
+            <h2 className="font-fraunces text-3xl font-bold tracking-tight sm:text-5xl">
+              Ship in a weekend.
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Three lines to your first crypto payment. Everything else is optional.
             </p>
-          </aside>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {DEV_POINTS.map((d) => (
+                <div key={d.title} className="rounded-2xl border border-border bg-card/90 p-4">
+                  <d.icon className="size-5 text-primary" />
+                  <p className="mt-3 text-sm font-medium">{d.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{d.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center" data-reveal>
+          <h2 className="font-fraunces text-3xl font-bold tracking-tight sm:text-5xl">
+            Honest fees. No surprises.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            One percentage per settled payment. No monthly minimums, no setup fees.
+          </p>
+        </div>
+
+        <div className="mt-14 grid items-center gap-6 lg:grid-cols-3">
+          {PRICING.map((tier) => (
+            <div
+              key={tier.name}
+              data-reveal
+              className={
+                tier.popular
+                  ? "relative rounded-3xl bg-primary p-7 text-primary-foreground lg:scale-105"
+                  : "rounded-3xl border border-border bg-card/90 p-7 backdrop-blur-xl"
+              }
+            >
+              {tier.popular && (
+                <span className="absolute -top-3 left-7 rounded-full bg-background px-3 py-1 text-[11px] font-semibold tracking-wide text-primary uppercase">
+                  Most popular
+                </span>
+              )}
+              <h3 className="font-fraunces text-lg font-semibold">{tier.name}</h3>
+              <p className="mt-4 font-fraunces text-4xl font-bold">{tier.fee}</p>
+              <p
+                className={
+                  tier.popular
+                    ? "mt-2 text-sm text-primary-foreground/80"
+                    : "mt-2 text-sm text-muted-foreground"
+                }
+              >
+                {tier.blurb}
+              </p>
+              <ul className="mt-6 space-y-3 text-sm">
+                {tier.perks.map((perk) => (
+                  <li key={perk} className="flex items-center gap-2.5">
+                    <CheckCircle2
+                      className={tier.popular ? "size-4" : "size-4 text-primary"}
+                    />
+                    {perk}
+                  </li>
+                ))}
+              </ul>
+              <Button
+                asChild
+                variant={tier.popular ? "secondary" : "outline"}
+                className="mt-7 w-full"
+              >
+                <Link to="/signup">
+                  {tier.name === "Enterprise" ? "Talk to sales" : "Get started"}
+                </Link>
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-24 sm:px-6">
+        <h2
+          className="text-center font-fraunces text-3xl font-bold tracking-tight sm:text-4xl"
+          data-reveal
+        >
+          Questions, answered.
+        </h2>
+        <div className="mt-10 space-y-3">
+          {FAQS.map((faq) => (
+            <details
+              key={faq.q}
+              data-reveal
+              className="group rounded-2xl border border-border bg-card/90 p-5 backdrop-blur-xl"
+            >
+              <summary className="cursor-pointer list-none font-medium marker:hidden">
+                <span className="flex items-center justify-between gap-4">
+                  {faq.q}
+                  <span className="text-primary transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </span>
+              </summary>
+              <p className="mt-3 text-sm text-muted-foreground">{faq.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+        <div
+          data-reveal
+          className="rounded-3xl border border-border bg-gradient-to-br from-primary/20 via-accent/10 to-transparent p-10 text-center backdrop-blur-xl sm:p-16"
+        >
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <Zap className="size-6" />
+          </span>
+          <h2 className="mt-6 font-fraunces text-3xl font-bold tracking-tight sm:text-5xl">
+            Start accepting crypto today.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+            Create an account, grab a test key, and take your first payment before lunch.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg" className="h-12 transition-transform hover:scale-[1.02]">
+              <Link to="/signup">Get started free</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="h-12">
+              <Link to="/pay">See a live checkout</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
   );
 }
