@@ -250,17 +250,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <Turnstile onToken={setCaptchaToken} resetKey={captchaNonce} />
               {errors["captcha"] && <FieldError>{errors["captcha"]}</FieldError>}
             </div>
-
-
             {!isSignup && (
-              <button
-                type="button"
-                onClick={() => void forgot()}
-                className="text-sm text-primary hover:underline"
-              >
+              <Link to="/forgot-password" className="block text-sm text-primary hover:underline">
                 Forgot password?
-              </button>
+              </Link>
             )}
+
 
             {errors["form"] && <FieldError>{errors["form"]}</FieldError>}
             {notice && <p className="text-sm text-primary">{notice}</p>}
