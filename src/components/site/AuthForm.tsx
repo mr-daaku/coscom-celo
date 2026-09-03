@@ -7,12 +7,8 @@ import { SpotlightBackground } from "@/components/SpotlightBackground";
 import { Turnstile } from "@/components/site/Turnstile";
 import logo from "@/assets/logo.png";
 import { verifyCaptcha } from "@/lib/captcha.functions";
-import {
-  resetPassword,
-  signInWithEmail,
-  signInWithGoogle,
-  signUpWithEmail,
-} from "@/lib/auth";
+import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/auth";
+
 
 
 function GoogleMark() {
