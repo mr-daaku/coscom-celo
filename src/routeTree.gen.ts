@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as WorkersRouteImport } from './routes/workers'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth.google.callback'
 
@@ -54,6 +55,11 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkersRoute = WorkersRouteImport.update({
   id: '/workers',
   path: '/workers',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/pay': typeof PayRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/workers': typeof WorkersRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/pay': typeof PayRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/workers': typeof WorkersRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/pay': typeof PayRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/verify-email': typeof VerifyEmailRoute
   '/workers': typeof WorkersRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/pay'
     | '/reset-password'
     | '/signup'
+    | '/verify-email'
     | '/workers'
     | '/auth/google/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/pay'
     | '/reset-password'
     | '/signup'
+    | '/verify-email'
     | '/workers'
     | '/auth/google/callback'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/pay'
     | '/reset-password'
     | '/signup'
+    | '/verify-email'
     | '/workers'
     | '/auth/google/callback'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   PayRoute: typeof PayRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
   WorkersRoute: typeof WorkersRoute
   AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
 }
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/workers': {
       id: '/workers'
       path: '/workers'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   PayRoute: PayRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
   WorkersRoute: WorkersRoute,
   AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
 }
