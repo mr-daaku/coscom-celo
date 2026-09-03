@@ -14,7 +14,189 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          last_used_at: string | null
+          name: string
+          permissions: string[]
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          last_used_at?: string | null
+          name: string
+          permissions?: string[]
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          last_used_at?: string | null
+          name?: string
+          permissions?: string[]
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          coin: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          due_date: string | null
+          id: string
+          number: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          coin?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          due_date?: string | null
+          id?: string
+          number: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          coin?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          due_date?: string | null
+          id?: string
+          number?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: string
+          block_number: number | null
+          chain: string
+          coin: string
+          confirmed_at: string | null
+          created_at: string
+          direction: string
+          fee: string | null
+          from_address: string | null
+          id: string
+          status: string
+          to_address: string | null
+          tx_hash: string
+          usd_value: number | null
+          user_id: string
+        }
+        Insert: {
+          amount: string
+          block_number?: number | null
+          chain: string
+          coin: string
+          confirmed_at?: string | null
+          created_at?: string
+          direction?: string
+          fee?: string | null
+          from_address?: string | null
+          id?: string
+          status?: string
+          to_address?: string | null
+          tx_hash: string
+          usd_value?: number | null
+          user_id: string
+        }
+        Update: {
+          amount?: string
+          block_number?: number | null
+          chain?: string
+          coin?: string
+          confirmed_at?: string | null
+          created_at?: string
+          direction?: string
+          fee?: string | null
+          from_address?: string | null
+          id?: string
+          status?: string
+          to_address?: string | null
+          tx_hash?: string
+          usd_value?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          address: string
+          chain: string
+          coin: string
+          created_at: string
+          id: string
+          label: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          chain: string
+          coin: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          chain?: string
+          coin?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
