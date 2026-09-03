@@ -63,7 +63,7 @@ function CallbackPage() {
       }
 
       const result = await api.auth.completeGoogleSignIn(code);
-      setName((result.name.split(" ")[0] ?? "there") || "there");
+      setName(result.name?.split(" ")[0] || "there");
       setState("success");
     };
 
