@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
-import { AuthCard } from "@/components/site/AuthCard";
+import { AuthForm } from "@/components/site/AuthForm";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -25,19 +25,5 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
-  return (
-    <AuthCard
-      title="Create your account"
-      subtitle="Deploy your first Worker in minutes"
-      action="Sign up with Google"
-      footer={
-        <>
-          Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </>
-      }
-    />
-  );
+  return <AuthForm mode="signup" />;
 }

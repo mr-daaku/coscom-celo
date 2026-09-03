@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
 import { supabase } from "@/integrations/supabase/client";
-import { displayName } from "@/lib/auth";
+import { googleRedirectUri } from "@/lib/auth";
+import { exchangeGoogleCode } from "@/lib/google-auth.functions";
 
 export const Route = createFileRoute("/auth/google/callback")({
   head: () => ({
@@ -24,38 +26,64 @@ export const Route = createFileRoute("/auth/google/callback")({
 function CallbackPage() {
   const navigate = useNavigate();
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  const [message, setMessage] = useState("");
   const [name, setName] = useState("there");
+  const started = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
-    let attempts = 0;
+    if (started.current) return;
+    started.current = true;
 
-    const check = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (data.session) {
-        setName(displayName(data.session.user, null).split(" ")[0] ?? "there");
-        setState("success");
-        return;
-      }
-      attempts += 1;
-      if (attempts > 12) {
+    const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const oauthError = params.get("error");
+
+      if (oauthError || !code) {
+        setMessage(
+          oauthError === "access_denied"
+            ? "You cancelled the Google sign-in."
+            : "No authorization code was returned by Google.",
+        );
         setState("error");
         return;
       }
-      setTimeout(() => void check(), 500);
+
+      const result = await exchangeGoogleCode({
+        data: { code, redirectUri: googleRedirectUri() },
+      });
+
+      if (result.error || !result.tokenHash || !result.email) {
+        setMessage(result.error ?? "Google sign-in failed.");
+        setState("error");
+        return;
+      }
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        type: "magiclink",
+        token_hash: result.tokenHash,
+      });
+
+      if (error || !data.session) {
+        setMessage(error?.message ?? "Could not start your session.");
+        setState("error");
+        return;
+      }
+
+      const meta = data.session.user.user_metadata as { full_name?: string };
+      setName(
+        (meta.full_name ?? result.email.split("@")[0] ?? "there").split(" ")[0] ?? "there",
+      );
+      setState("success");
     };
 
-    void check();
-    return () => {
-      cancelled = true;
-    };
+    void run();
   }, []);
 
   useEffect(() => {
-    if (state !== "success") return;
+    if (state !== "success") return undefined;
     const t = setTimeout(
-      () => navigate({ to: "/dashboard", search: { tab: "overview" } }),
+      () => void navigate({ to: "/dashboard", search: { tab: "overview" } }),
       900,
     );
     return () => clearTimeout(t);
@@ -65,9 +93,14 @@ function CallbackPage() {
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-md rounded-3xl border border-border bg-card/90 p-8 text-center backdrop-blur-xl">
         <div className="mb-6 flex items-center justify-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Zap className="size-4" />
-          </span>
+          <img
+            src={logo}
+            alt="CosComPay logo"
+            width={32}
+            height={32}
+            loading="lazy"
+            className="size-8 rounded-lg"
+          />
           <span className="font-fraunces text-lg font-bold">CosComPay</span>
         </div>
 
@@ -99,10 +132,8 @@ function CallbackPage() {
               <AlertTriangle className="size-6" />
             </span>
             <h1 className="mt-5 font-fraunces text-xl font-bold">Sign-in failed</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              We couldn't complete your Google sign-in. Please try again.
-            </p>
-            <Button className="mt-6" onClick={() => navigate({ to: "/login" })}>
+            <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+            <Button className="mt-6" onClick={() => void navigate({ to: "/login" })}>
               Try again
             </Button>
           </>
