@@ -58,34 +58,3 @@ export const DEPOSIT_ADDRESSES: Record<string, string> = {
   Solana: "7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj",
   TON: "UQD2NmD_lH5f-9-CQY6PGmy4A2VjRkMPBiZ5Q5Y6H_pMkV5x",
 };
-
-export const WORKERS = [
-  {
-    name: "checkout-router",
-    region: "Global",
-    invocations: "1.2M",
-    latency: "18ms",
-    status: "active" as const,
-  },
-  {
-    name: "webhook-dispatcher",
-    region: "Global",
-    invocations: "842K",
-    latency: "24ms",
-    status: "active" as const,
-  },
-  {
-    name: "rate-oracle",
-    region: "Global",
-    invocations: "3.4M",
-    latency: "11ms",
-    status: "active" as const,
-  },
-  {
-    name: "settlement-batcher",
-    region: "EU",
-    invocations: "96K",
-    latency: "62ms",
-    status: "paused" as const,
-  },
-];
