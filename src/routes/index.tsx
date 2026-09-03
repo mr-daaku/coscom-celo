@@ -133,14 +133,19 @@ function LandingPage() {
     },
   ];
 
-  const trustedBy = [
-    { name: "Binance", serif: true },
-    { name: "Stripe", serif: false },
-    { name: "Coinbase", serif: true },
-    { name: "Shopify", serif: false },
-    { name: "WooCommerce", serif: true },
-    { name: "Webflow", serif: false },
+  const supportedCoins = [
+    { name: "Bitcoin", symbol: "BTC", chain: "Bitcoin", image: "/assets/btc.png" },
+    { name: "Ethereum", symbol: "ETH", chain: "Ethereum", image: "/assets/eth.png" },
+    { name: "Tether", symbol: "USDT", chain: "ERC-20 · TRC-20 · BEP-20", image: "/assets/usdt.png" },
+    { name: "USD Coin", symbol: "USDC", chain: "ERC-20 · SPL", image: "/assets/usdc.png" },
+    { name: "BNB", symbol: "BNB", chain: "BNB Chain", image: "/assets/bnb.png" },
+    { name: "Solana", symbol: "SOL", chain: "Solana", image: "/assets/sol.png" },
+    { name: "TRON", symbol: "TRX", chain: "TRON", image: "/assets/trx.png" },
+    { name: "Toncoin", symbol: "TON", chain: "TON", image: "/assets/ton.png" },
+    { name: "Polygon", symbol: "POL", chain: "Polygon", image: "/assets/pol.png" },
+    { name: "Base", symbol: "BASE", chain: "Base L2", image: "/assets/base.png" },
   ];
+
 
   const faqs = [
     {
