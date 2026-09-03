@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { readUser, type CoscomUser } from "@/lib/coscom";
+import { useAuth } from "@/lib/auth";
 
 const NAV = [
   { label: "Features", href: "/#features" },
