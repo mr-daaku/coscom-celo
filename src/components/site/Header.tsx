@@ -102,7 +102,7 @@ export function Header() {
               onClick={() => setOpen(false)}
               className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              Workers
+              Chain checker
             </Link>
             <div className="mt-2 flex flex-col gap-2">
               {user ? (
