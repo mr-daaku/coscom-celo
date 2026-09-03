@@ -694,11 +694,12 @@ function WalletsTab() {
         {WALLETS.map((w) => (
           <Card key={w.symbol}>
             <div className="flex items-center gap-3">
-              <span
-                className="flex size-10 items-center justify-center rounded-xl font-mono text-xs font-bold"
-                style={{ backgroundColor: `${w.color}22`, color: w.color }}
-              >
-                {w.symbol}
+              <span className="flex size-10 items-center justify-center rounded-xl bg-muted p-1.5">
+                <img
+                  src={`/assets/${w.symbol === "MATIC" ? "pol" : w.symbol.toLowerCase()}.png`}
+                  alt=""
+                  className="size-full object-contain"
+                />
               </span>
               <div>
                 <p className="text-sm font-medium">{w.chain}</p>

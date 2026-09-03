@@ -11,9 +11,7 @@ export function SpotlightBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  const [isMobileLayout, setIsMobileLayout] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT,
-  );
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   // Keep the layout flag in sync while the device is rotated / resized so the

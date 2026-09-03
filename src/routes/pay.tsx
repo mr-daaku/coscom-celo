@@ -221,6 +221,7 @@ function PayPage() {
                     }}
                     className="rounded-2xl border border-border bg-muted/40 p-3 text-left transition-all hover:scale-[1.02] hover:border-primary"
                   >
+                    <img src={t.image} alt="" className="mb-3 size-9 object-contain" />
                     <p className="font-mono text-sm font-bold">{t.symbol}</p>
                     <p className="truncate text-xs text-muted-foreground">{t.name}</p>
                     <p className="mt-1 text-[11px] text-primary">{t.price}</p>

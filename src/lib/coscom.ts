@@ -200,13 +200,13 @@ export const WALLETS = [
 ];
 
 export const TOKENS = [
-  { symbol: "USDT", name: "Tether USD", price: "$1.00" },
-  { symbol: "USDC", name: "USD Coin", price: "$1.00" },
-  { symbol: "BNB", name: "BNB Chain", price: "$600" },
-  { symbol: "ETH", name: "Ethereum", price: "$4,284" },
-  { symbol: "TRX", name: "TRON", price: "$0.28" },
-  { symbol: "TON", name: "Toncoin", price: "$5.30" },
-  { symbol: "BTC", name: "Bitcoin", price: "$112,480" },
+  { symbol: "USDT", name: "Tether USD", price: "$1.00", image: "/assets/usdt.png" },
+  { symbol: "USDC", name: "USD Coin", price: "$1.00", image: "/assets/usdc.png" },
+  { symbol: "BNB", name: "BNB Chain", price: "$600", image: "/assets/bnb.png" },
+  { symbol: "ETH", name: "Ethereum", price: "$4,284", image: "/assets/eth.png" },
+  { symbol: "TRX", name: "TRON", price: "$0.28", image: "/assets/trx.png" },
+  { symbol: "TON", name: "Toncoin", price: "$5.30", image: "/assets/ton.png" },
+  { symbol: "BTC", name: "Bitcoin", price: "$112,480", image: "/assets/btc.png" },
 ];
 
 export const TOKEN_NETWORKS: Record<
