@@ -3,6 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getGoogleAuthUrl } from "@/lib/google-auth.functions";
+import { requestPasswordReset, signUpAccount } from "@/lib/account.functions";
+
 
 export type Profile = {
   id: string;
