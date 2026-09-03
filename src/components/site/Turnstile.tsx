@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { TURNSTILE_SITE_KEY } from "@/lib/captcha.functions";
 
@@ -49,28 +49,41 @@ function loadScript() {
 /** Cloudflare Turnstile widget. Emits the token to verify on the server. */
 export function Turnstile({
   onToken,
+  onUnavailable,
   resetKey = 0,
 }: {
   onToken: (token: string | null) => void;
+  onUnavailable?: (unavailable: boolean) => void;
   resetKey?: number;
 }) {
   const holder = useRef<HTMLDivElement | null>(null);
   const widgetId = useRef<string | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    const fail = () => {
+      if (cancelled) return;
+      setFailed(true);
+      onToken(null);
+      onUnavailable?.(true);
+    };
     void loadScript()
       .then(() => {
         if (cancelled || !holder.current || !window.turnstile || widgetId.current) return;
         widgetId.current = window.turnstile.render(holder.current, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "dark",
-          callback: (token) => onToken(token),
+          callback: (token) => {
+            setFailed(false);
+            onUnavailable?.(false);
+            onToken(token);
+          },
           "expired-callback": () => onToken(null),
-          "error-callback": () => onToken(null),
+          "error-callback": fail,
         });
       })
-      .catch(() => onToken(null));
+      .catch(fail);
     return () => {
       cancelled = true;
     };
@@ -84,5 +97,14 @@ export function Turnstile({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 
-  return <div ref={holder} className="min-h-[65px]" />;
+  return (
+    <div>
+      <div ref={holder} className={failed ? "" : "min-h-[65px]"} />
+      {failed && (
+        <p className="text-xs text-muted-foreground">
+          Security check unavailable on this domain — you can continue.
+        </p>
+      )}
+    </div>
+  );
 }
