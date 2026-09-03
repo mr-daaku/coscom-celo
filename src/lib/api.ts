@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 const PRODUCTION_ORIGINS = new Set([
   "https://coscomai.xyz",
@@ -25,8 +26,8 @@ function currentOrigin() {
 export const api = {
   auth: {
     session: () => supabase.auth.getSession(),
-    onStateChange: (...args: Parameters<typeof supabase.auth.onAuthStateChange>) =>
-      supabase.auth.onAuthStateChange(...args),
+    onStateChange: (callback: (event: AuthChangeEvent, session: Session | null) => void) =>
+      supabase.auth.onAuthStateChange(callback),
     signOut: () => supabase.auth.signOut(),
     signInWithGoogle: async () => {
       const origin = currentOrigin();
