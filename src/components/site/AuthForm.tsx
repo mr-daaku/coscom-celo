@@ -1,25 +1,19 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  RefreshCw,
-  User,
-} from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SpotlightBackground } from "@/components/SpotlightBackground";
+import { Turnstile } from "@/components/site/Turnstile";
 import logo from "@/assets/logo.png";
+import { verifyCaptcha } from "@/lib/captcha.functions";
 import {
   resetPassword,
   signInWithEmail,
   signInWithGoogle,
   signUpWithEmail,
 } from "@/lib/auth";
+
 
 function GoogleMark() {
   return (
