@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 const PRODUCTION_ORIGINS = new Set([
@@ -30,14 +31,13 @@ export const api = {
     signOut: () => supabase.auth.signOut(),
     signInWithGoogle: async () => {
       const origin = currentOrigin();
-      return supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${origin}/auth/google/callback`,
-          queryParams: { prompt: "select_account" },
-        },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${origin}/auth/google/callback`,
+        extraParams: { prompt: "select_account" },
       });
+      return { error: result.error ?? null };
     },
+
   },
   profiles: {
     get: (userId: string) =>
