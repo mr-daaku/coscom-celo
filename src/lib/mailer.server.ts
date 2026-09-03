@@ -1,9 +1,10 @@
 /**
  * Sends mail from otp.coscom@gmail.com over Gmail SMTP using a Google
- * App Password. The Workers runtime has no raw `net` sockets, so this uses
- * worker-mailer, which speaks SMTP over the runtime's TCP socket API.
+ * App Password. The production runtime has no Node `net` module, so this uses
+ * worker-mailer, which speaks SMTP over the Worker TCP socket API
+ * (`cloudflare:sockets`). That module only exists in the deployed runtime, so
+ * it is imported lazily — local dev cannot open SMTP and reports it clearly.
  */
-import { WorkerMailer } from "worker-mailer";
 
 export async function sendMail(opts: { to: string; subject: string; html: string }) {
   const user = process.env["GMAIL_USER"];
@@ -14,6 +15,7 @@ export async function sendMail(opts: { to: string; subject: string; html: string
   }
 
   try {
+    const { WorkerMailer } = await import("worker-mailer");
     const mailer = await WorkerMailer.connect({
       host: "smtp.gmail.com",
       port: 587,
@@ -36,6 +38,7 @@ export async function sendMail(opts: { to: string; subject: string; html: string
     return { sent: false, error: "Could not send the email. Please try again." };
   }
 }
+
 
 
 export function emailShell(opts: {
