@@ -38,8 +38,6 @@ function GoogleMark() {
   );
 }
 
-const CAPTCHA_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
 function FieldError({ children }: { children: ReactNode }) {
   return (
     <p className="mt-1.5 flex items-center gap-1 text-sm text-destructive">
@@ -56,26 +54,15 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [captcha, setCaptcha] = useState("");
-  const [captchaText, setCaptchaText] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const generateCaptcha = useCallback(() => {
-    let out = "";
-    for (let i = 0; i < 6; i += 1) {
-      out += CAPTCHA_CHARS.charAt(Math.floor(Math.random() * CAPTCHA_CHARS.length));
-    }
-    setCaptchaText(out);
-    setCaptcha("");
-  }, []);
-
-  useEffect(() => {
-    generateCaptcha();
-  }, [generateCaptcha]);
+  const resetCaptcha = () => setCaptchaNonce((n) => n + 1);
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -85,9 +72,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!password) next["password"] = "Password is required";
     else if (isSignup && password.length < 8)
       next["password"] = "Use at least 8 characters";
-    if (!captcha) next["captcha"] = "Please enter the captcha";
-    else if (captcha.toLowerCase() !== captchaText.toLowerCase())
-      next["captcha"] = "Invalid captcha";
+    if (!captchaToken) next["captcha"] = "Please complete the security check";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -98,6 +83,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!validate()) return;
 
     setBusy(true);
+    const captcha = await verifyCaptcha({ data: { token: captchaToken ?? "" } });
+    if (!captcha.ok) {
+      setBusy(false);
+      resetCaptcha();
+      setErrors({ captcha: captcha.error ?? "Captcha check failed." });
+      return;
+    }
+
     if (isSignup) {
       const { error, needsConfirmation } = await signUpWithEmail(
         email.trim(),
@@ -106,7 +99,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       );
       setBusy(false);
       if (error) {
-        generateCaptcha();
+        resetCaptcha();
         setErrors({ form: error.message });
         return;
       }
@@ -120,7 +113,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       const { error } = await signInWithEmail(email.trim(), password);
       setBusy(false);
       if (error) {
-        generateCaptcha();
+        resetCaptcha();
         setErrors({ form: error.message });
         return;
       }
@@ -149,6 +142,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (error) setErrors({ form: error.message });
     else setNotice("Password reset link sent. Check your inbox.");
   };
+
+
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
