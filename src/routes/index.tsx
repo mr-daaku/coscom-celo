@@ -72,6 +72,7 @@ function LandingPage() {
 
       return () => observer.disconnect();
     }
+    return undefined;
   }, []);
 
   const features = [
