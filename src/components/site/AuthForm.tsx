@@ -1,15 +1,11 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SpotlightBackground } from "@/components/SpotlightBackground";
-import { Turnstile } from "@/components/site/Turnstile";
 import logo from "@/assets/logo.png";
-import { verifyCaptcha } from "@/lib/captcha.functions";
-import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/auth";
-
-
+import { signInWithGoogle } from "@/lib/auth";
 
 function GoogleMark() {
   return (
@@ -44,106 +40,19 @@ function FieldError({ children }: { children: ReactNode }) {
 }
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
-  const navigate = useNavigate();
   const isSignup = mode === "signup";
-
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
-  const [captchaNonce, setCaptchaNonce] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const resetCaptcha = () => setCaptchaNonce((n) => n + 1);
-
-  const validate = () => {
-    const next: Record<string, string> = {};
-    if (isSignup && fullName.trim().length < 2) next["fullName"] = "Full name is required";
-    if (!email.trim()) next["email"] = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next["email"] = "Invalid email format";
-    if (!password) next["password"] = "Password is required";
-    else if (isSignup && password.length < 8)
-      next["password"] = "Use at least 8 characters";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNotice(null);
-    if (!validate()) return;
-
-    setBusy(true);
-
-    try {
-      if (isSignup) {
-        // The captcha token is verified server-side inside signUpWithEmail.
-        const { error, needsConfirmation } = await signUpWithEmail(
-          email.trim(),
-          password,
-          fullName.trim(),
-          captchaToken ?? "",
-        );
-        setBusy(false);
-        resetCaptcha();
-        if (error) {
-          setErrors({ form: error.message });
-          return;
-        }
-        if (needsConfirmation) {
-          setNotice(
-            "Account created. We emailed you an activation link — it expires in 10 minutes.",
-          );
-          return;
-        }
-      } else {
-        void verifyCaptcha({ data: { token: captchaToken ?? "" } }).catch(() => undefined);
-        const { error } = await signInWithEmail(email.trim(), password);
-        setBusy(false);
-        if (error) {
-          resetCaptcha();
-          setErrors({
-            form: /confirm/i.test(error.message)
-              ? "Please activate your account from the link we emailed you."
-              : error.message,
-          });
-          return;
-        }
-      }
-    } catch (error) {
-      setBusy(false);
-      resetCaptcha();
-      setErrors({
-        form:
-          error instanceof Error && error.message
-            ? error.message
-            : "Something went wrong on the server. Please try again.",
-      });
-      return;
-    }
-    void navigate({ to: "/dashboard", search: { tab: "overview" } });
-  };
-
+  const [error, setError] = useState<string | null>(null);
 
   const startGoogle = async () => {
     setGoogleBusy(true);
-    setErrors({});
-    setNotice(null);
+    setError(null);
     const result = await signInWithGoogle();
     if (result.error) {
-      setErrors({ form: result.error.message });
+      setError(result.error.message);
       setGoogleBusy(false);
     }
   };
-
-
-
-
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
@@ -174,117 +83,13 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {isSignup
-              ? "Start accepting crypto in minutes"
-              : "Sign in to your merchant dashboard"}
+              ? "Sign up with Google and start accepting crypto in minutes"
+              : "Sign in with Google to reach your merchant dashboard"}
           </p>
-
-          <form onSubmit={submit} className="mt-7 space-y-4" noValidate>
-            {isSignup && (
-              <div>
-                <label htmlFor="fullName" className="mb-2 block text-sm font-medium">
-                  Full name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    id="fullName"
-                    name="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    autoComplete="name"
-                    placeholder="Alex Merchant"
-                    className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-                {errors["fullName"] && <FieldError>{errors["fullName"]}</FieldError>}
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                Email address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  placeholder="you@company.com"
-                  className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              {errors["email"] && <FieldError>{errors["email"]}</FieldError>}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="mb-2 block text-sm font-medium">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={isSignup ? "new-password" : "current-password"}
-                  placeholder="••••••••"
-                  className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-11 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                />
-                <button
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-              {errors["password"] && <FieldError>{errors["password"]}</FieldError>}
-            </div>
-
-            <div>
-              <span className="mb-2 block text-sm font-medium">Security check</span>
-              <Turnstile
-                onToken={setCaptchaToken}
-                onUnavailable={setCaptchaUnavailable}
-                resetKey={captchaNonce}
-              />
-              {errors["captcha"] && <FieldError>{errors["captcha"]}</FieldError>}
-            </div>
-            {!isSignup && (
-              <Link to="/forgot-password" className="block text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            )}
-
-
-            {errors["form"] && <FieldError>{errors["form"]}</FieldError>}
-            {notice && <p className="text-sm text-primary">{notice}</p>}
-
-            <Button type="submit" className="h-12 w-full" disabled={busy}>
-              {busy
-                ? isSignup
-                  ? "Creating account…"
-                  : "Signing in…"
-                : isSignup
-                  ? "Create account"
-                  : "Sign in"}
-            </Button>
-          </form>
-
-          <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
-          </div>
 
           <Button
             variant="outline"
-            className="h-12 w-full gap-3 bg-white text-[#1f1f1f] hover:bg-white/90"
+            className="mt-7 h-12 w-full gap-3 bg-white text-[#1f1f1f] hover:bg-white/90"
             disabled={googleBusy}
             onClick={() => void startGoogle()}
           >
@@ -295,6 +100,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                 ? "Sign up with Google"
                 : "Continue with Google"}
           </Button>
+
+          {error && <FieldError>{error}</FieldError>}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {isSignup ? (
