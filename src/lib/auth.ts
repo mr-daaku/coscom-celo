@@ -3,6 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getGoogleAuthUrl } from "@/lib/google-auth.functions";
+import { requestPasswordReset, signUpAccount } from "@/lib/account.functions";
+
 
 export type Profile = {
   id: string;
@@ -96,17 +98,12 @@ export async function signUpWithEmail(
   email: string,
   password: string,
   fullName: string,
+  captchaToken: string,
 ) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.origin,
-      data: { full_name: fullName },
-    },
+  const { error } = await signUpAccount({
+    data: { email, password, fullName, captchaToken, origin: window.location.origin },
   });
-  if (error) return { error, needsConfirmation: false };
-  return { error: null, needsConfirmation: !data.session };
+  return { error: error ? new Error(error) : null, needsConfirmation: !error };
 }
 
 export async function signInWithEmail(email: string, password: string) {
@@ -114,9 +111,10 @@ export async function signInWithEmail(email: string, password: string) {
   return { error };
 }
 
-export async function resetPassword(email: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+export async function resetPassword(email: string, captchaToken: string) {
+  const { error } = await requestPasswordReset({
+    data: { email, captchaToken, origin: window.location.origin },
   });
-  return { error };
+  return { error: error ? new Error(error) : null };
 }
+

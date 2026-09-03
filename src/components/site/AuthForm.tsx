@@ -7,12 +7,8 @@ import { SpotlightBackground } from "@/components/SpotlightBackground";
 import { Turnstile } from "@/components/site/Turnstile";
 import logo from "@/assets/logo.png";
 import { verifyCaptcha } from "@/lib/captcha.functions";
-import {
-  resetPassword,
-  signInWithEmail,
-  signInWithGoogle,
-  signUpWithEmail,
-} from "@/lib/auth";
+import { signInWithEmail, signInWithGoogle, signUpWithEmail } from "@/lib/auth";
+
 
 
 function GoogleMark() {
@@ -83,38 +79,44 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!validate()) return;
 
     setBusy(true);
-    const captcha = await verifyCaptcha({ data: { token: captchaToken ?? "" } });
-    if (!captcha.ok) {
-      setBusy(false);
-      resetCaptcha();
-      setErrors({ captcha: captcha.error ?? "Captcha check failed." });
-      return;
-    }
 
     if (isSignup) {
+      // The captcha token is verified server-side inside signUpWithEmail.
       const { error, needsConfirmation } = await signUpWithEmail(
         email.trim(),
         password,
         fullName.trim(),
+        captchaToken ?? "",
       );
       setBusy(false);
+      resetCaptcha();
       if (error) {
-        resetCaptcha();
         setErrors({ form: error.message });
         return;
       }
       if (needsConfirmation) {
         setNotice(
-          "Account created. Check your inbox and confirm your email to sign in.",
+          "Account created. We emailed you an activation link — it expires in 10 minutes.",
         );
         return;
       }
     } else {
+      const captcha = await verifyCaptcha({ data: { token: captchaToken ?? "" } });
+      if (!captcha.ok) {
+        setBusy(false);
+        resetCaptcha();
+        setErrors({ captcha: captcha.error ?? "Captcha check failed." });
+        return;
+      }
       const { error } = await signInWithEmail(email.trim(), password);
       setBusy(false);
       if (error) {
         resetCaptcha();
-        setErrors({ form: error.message });
+        setErrors({
+          form: /confirm/i.test(error.message)
+            ? "Please activate your account from the link we emailed you."
+            : error.message,
+        });
         return;
       }
     }
@@ -132,16 +134,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     }
   };
 
-  const forgot = async () => {
-    setNotice(null);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErrors({ email: "Enter your email first" });
-      return;
-    }
-    const { error } = await resetPassword(email.trim());
-    if (error) setErrors({ form: error.message });
-    else setNotice("Password reset link sent. Check your inbox.");
-  };
+
 
 
 
@@ -253,17 +246,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <Turnstile onToken={setCaptchaToken} resetKey={captchaNonce} />
               {errors["captcha"] && <FieldError>{errors["captcha"]}</FieldError>}
             </div>
-
-
             {!isSignup && (
-              <button
-                type="button"
-                onClick={() => void forgot()}
-                className="text-sm text-primary hover:underline"
-              >
+              <Link to="/forgot-password" className="block text-sm text-primary hover:underline">
                 Forgot password?
-              </button>
+              </Link>
             )}
+
 
             {errors["form"] && <FieldError>{errors["form"]}</FieldError>}
             {notice && <p className="text-sm text-primary">{notice}</p>}
