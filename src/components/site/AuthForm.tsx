@@ -249,32 +249,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             </div>
 
             <div>
-              <label htmlFor="captcha" className="mb-2 block text-sm font-medium">
-                Security check
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="select-none rounded-xl border border-border bg-muted px-4 py-3 font-mono text-base tracking-[0.35em] text-foreground">
-                  {captchaText}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Refresh captcha"
-                  onClick={generateCaptcha}
-                  className="rounded-xl border border-border p-3 text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <RefreshCw className="size-4" />
-                </button>
-                <input
-                  id="captcha"
-                  name="captcha"
-                  value={captcha}
-                  onChange={(e) => setCaptcha(e.target.value)}
-                  placeholder="Type the code"
-                  className="min-w-0 flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-ring"
-                />
-              </div>
+              <span className="mb-2 block text-sm font-medium">Security check</span>
+              <Turnstile onToken={setCaptchaToken} resetKey={captchaNonce} />
               {errors["captcha"] && <FieldError>{errors["captcha"]}</FieldError>}
             </div>
+
 
             {!isSignup && (
               <button
