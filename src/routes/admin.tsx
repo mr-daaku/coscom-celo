@@ -107,7 +107,7 @@ function AdminPage() {
             This console is limited to the platform owner account.
           </p>
           <Button className="mt-6 w-full" asChild>
-            <Link to={user ? "/dashboard" : "/login"}>{user ? "Back to dashboard" : "Sign in"}</Link>
+            <Link to={user ? "/dashboard" : "/login"} search={user ? { tab: "overview" } : undefined}>{user ? "Back to dashboard" : "Sign in"}</Link>
           </Button>
         </Card>
       </main>
@@ -124,7 +124,7 @@ function AdminPage() {
         <ShieldCheck className="size-6 text-primary" />
         <h1 className="font-fraunces text-2xl font-bold sm:text-3xl">Admin console</h1>
         <Button variant="outline" size="sm" className="ml-auto" asChild>
-          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/dashboard" search={{ tab: "overview" }}>Dashboard</Link>
         </Button>
       </div>
 

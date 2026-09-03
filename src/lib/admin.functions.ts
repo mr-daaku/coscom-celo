@@ -14,6 +14,29 @@ async function assertAdmin(context: { userId: string; supabase: any; claims: any
   if (error || !isAdmin || email !== ADMIN_EMAIL) throw new Error("Forbidden");
 }
 
+export type MerchantDTO = {
+  user_id: string;
+  business_name: string | null;
+  plan: string;
+  plan_status: string;
+  plan_expires_at: string | null;
+  suspended: boolean;
+  created_at: string;
+};
+
+export type AdminWithdrawalDTO = {
+  id: string;
+  user_id: string;
+  coin: string;
+  chain: string;
+  to_address: string;
+  amount_usd: number;
+  fee_usd: number;
+  net_usd: number;
+  status: string;
+  created_at: string;
+};
+
 export const adminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -44,8 +67,8 @@ export const adminOverview = createServerFn({ method: "GET" })
         subscriptionRevenueUsd: planPaid.reduce((s, p) => s + Number(p.price_usd), 0),
         pendingWithdrawals: ((withdrawals as { status: string }[]) ?? []).filter((w) => w.status === "pending").length,
       },
-      merchants: (accounts as Record<string, unknown>[]) ?? [],
-      withdrawals: (withdrawals as Record<string, unknown>[]) ?? [],
+      merchants: (accounts as MerchantDTO[]) ?? [],
+      withdrawals: (withdrawals as AdminWithdrawalDTO[]) ?? [],
     };
   });
 

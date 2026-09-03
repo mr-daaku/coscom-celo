@@ -14,6 +14,7 @@ import {
   requestWithdrawal,
   rotateWebhookSecret,
   startPlanCheckout,
+  type PlanOrderDTO,
   updateMerchantSettings,
 } from "@/lib/gateway.functions";
 import { PLAN_LIST, money } from "@/lib/plans";
@@ -106,7 +107,7 @@ export function ChargesTab() {
     },
     onSuccess: (payment) => {
       setError(null);
-      setLink(`${window.location.origin}/pay?ref=${String(payment["reference"])}`);
+      setLink(`${window.location.origin}/pay?ref=${payment.reference}`);
       void qc.invalidateQueries({ queryKey: ["charges"] });
       void qc.invalidateQueries({ queryKey: ["merchant-overview"] });
     },
@@ -359,7 +360,7 @@ export function WithdrawalsTab() {
 export function BillingTab() {
   const qc = useQueryClient();
   const overview = useOverview();
-  const [order, setOrder] = useState<Record<string, unknown> | null>(null);
+  const [order, setOrder] = useState<PlanOrderDTO | null>(null);
   const [hash, setHash] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -450,19 +451,19 @@ export function BillingTab() {
       {order && (
         <Card>
           <h3 className="font-fraunces text-lg font-bold">
-            Pay {money(Number(order["price_usd"]))} in {String(order["coin"])} ({String(order["chain"])})
+            Pay {money(Number(order.price_usd))} in {order.coin} ({order.chain})
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Send the exact amount to the address below, then paste your transaction hash. We verify it on-chain before
             activating your plan.
           </p>
           <div className="mt-3 flex items-center gap-2 rounded-xl bg-muted p-2">
-            <code className="min-w-0 flex-1 truncate font-mono text-xs">{String(order["deposit_address"])}</code>
+            <code className="min-w-0 flex-1 truncate font-mono text-xs">{order.deposit_address}</code>
             <Button
               size="icon"
               variant="ghost"
               aria-label="Copy address"
-              onClick={() => void navigator.clipboard.writeText(String(order["deposit_address"]))}
+              onClick={() => void navigator.clipboard.writeText(order.deposit_address)}
             >
               <Copy className="size-4" />
             </Button>

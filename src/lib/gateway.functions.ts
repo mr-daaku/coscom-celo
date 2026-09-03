@@ -27,6 +27,63 @@ const reference = z
   .trim()
   .regex(/^cos_[a-z0-9]{6,32}$/, "Invalid payment reference");
 
+
+export type PaymentDTO = {
+  id: string;
+  reference: string;
+  amount_usd: number;
+  coin: string;
+  chain: string;
+  crypto_amount: number | null;
+  deposit_address: string;
+  fee_percent: number;
+  fee_usd: number;
+  net_usd: number;
+  status: string;
+  tx_hash: string | null;
+  expires_at: string;
+  description: string | null;
+  created_at: string;
+};
+
+export type WithdrawalDTO = {
+  id: string;
+  coin: string;
+  chain: string;
+  to_address: string;
+  amount_usd: number;
+  fee_percent: number;
+  fee_usd: number;
+  net_usd: number;
+  status: string;
+  tx_hash: string | null;
+  created_at: string;
+};
+
+export type PlanOrderDTO = {
+  id: string;
+  plan: string;
+  price_usd: number;
+  coin: string;
+  chain: string;
+  deposit_address: string;
+  status: string;
+  expires_at: string;
+};
+
+export type PublicPaymentDTO = {
+  reference: string;
+  amount_usd: number;
+  coin: string;
+  chain: string;
+  crypto_amount: number | null;
+  deposit_address: string;
+  status: string;
+  expires_at: string;
+  description: string | null;
+  tx_hash: string | null;
+};
+
 /* ------------------------------- merchant ------------------------------- */
 
 export const getMerchantOverview = createServerFn({ method: "GET" })
@@ -157,7 +214,7 @@ export async function createPaymentRecord(
   g: typeof import("./gateway.server"),
   userId: string,
   data: CreateInput,
-) {
+): Promise<PaymentDTO> {
   const asset = g.assetFor(data.coin, data.chain);
   if (!asset) throw new Error(`Unsupported coin/network pair: ${data.coin} on ${data.chain}`);
 
@@ -186,7 +243,7 @@ export async function createPaymentRecord(
   const { data: created, error } = await g.table(client, "payments").insert(record).select("*").single();
   if (error) throw new Error(error.message);
   await g.sendWebhook(account, "payment.created", created);
-  return created as Record<string, unknown>;
+  return created as PaymentDTO;
 }
 
 export const requestWithdrawal = createServerFn({ method: "POST" })
@@ -237,7 +294,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     await g.sendWebhook(account, "withdrawal.requested", created);
-    return created as Record<string, unknown>;
+    return created as WithdrawalDTO;
   });
 
 /* --------------------------------- plans -------------------------------- */
@@ -268,7 +325,7 @@ export const startPlanCheckout = createServerFn({ method: "POST" })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
-    return created as Record<string, unknown>;
+    return created as PlanOrderDTO;
   });
 
 export const confirmPlanPayment = createServerFn({ method: "POST" })
@@ -327,7 +384,7 @@ export const getPaymentByReference = createServerFn({ method: "POST" })
       .eq("reference", data.reference)
       .maybeSingle();
     if (!row) throw new Error("Payment not found.");
-    return row as Record<string, unknown>;
+    return row as PublicPaymentDTO;
   });
 
 /** A payer submits their transaction hash; we verify it on-chain before settling. */

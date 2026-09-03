@@ -44,21 +44,21 @@ export const Route = createFileRoute("/api/public/v1/payments")({
 
         try {
           const { createPaymentRecord } = await import("@/lib/gateway.functions");
-          const payment = (await createPaymentRecord(g, auth.key.user_id, parsed)) as Record<string, unknown>;
+          const payment = await createPaymentRecord(g, auth.key.user_id, parsed);
           const origin = new URL(request.url).origin;
           return withCors(
             g.json(
               {
-                id: payment["id"],
-                reference: payment["reference"],
-                amount_usd: payment["amount_usd"],
-                coin: payment["coin"],
-                chain: payment["chain"],
-                crypto_amount: payment["crypto_amount"],
-                deposit_address: payment["deposit_address"],
-                status: payment["status"],
-                expires_at: payment["expires_at"],
-                checkout_url: `${origin}/pay?ref=${String(payment["reference"])}`,
+                id: payment.id,
+                reference: payment.reference,
+                amount_usd: payment.amount_usd,
+                coin: payment.coin,
+                chain: payment.chain,
+                crypto_amount: payment.crypto_amount,
+                deposit_address: payment.deposit_address,
+                status: payment.status,
+                expires_at: payment.expires_at,
+                checkout_url: `${origin}/pay?ref=${payment.reference}`,
               },
               201,
             ),
