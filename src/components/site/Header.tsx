@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { readUser, type CoscomUser } from "@/lib/coscom";
+import { useAuth } from "@/lib/auth";
 
 const NAV = [
   { label: "Features", href: "/#features" },
@@ -16,10 +16,9 @@ const NAV = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<CoscomUser | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    setUser(readUser());
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -53,7 +52,7 @@ export function Header() {
             </a>
           ))}
           <Link to="/workers" className="transition-colors hover:text-foreground">
-            Workers
+            Chain checker
           </Link>
         </nav>
 
@@ -103,7 +102,7 @@ export function Header() {
               onClick={() => setOpen(false)}
               className="rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              Workers
+              Chain checker
             </Link>
             <div className="mt-2 flex flex-col gap-2">
               {user ? (

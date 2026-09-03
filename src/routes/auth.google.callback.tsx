@@ -3,12 +3,10 @@ import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { DEMO_USER, writeUser } from "@/lib/coscom";
+import { supabase } from "@/integrations/supabase/client";
+import { displayName } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth/google/callback")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    code: typeof search["code"] === "string" ? (search["code"] as string) : "",
-  }),
   head: () => ({
     meta: [
       { title: "Signing you in — CosComPay" },
@@ -24,25 +22,42 @@ export const Route = createFileRoute("/auth/google/callback")({
 });
 
 function CallbackPage() {
-  const { code } = Route.useSearch();
   const navigate = useNavigate();
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  const [name, setName] = useState("there");
 
   useEffect(() => {
-    if (!code) {
-      setState("error");
-      return;
-    }
-    const t = setTimeout(() => {
-      writeUser(DEMO_USER);
-      setState("success");
-    }, 1100);
-    return () => clearTimeout(t);
-  }, [code]);
+    let cancelled = false;
+    let attempts = 0;
+
+    const check = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session) {
+        setName(displayName(data.session.user, null).split(" ")[0] ?? "there");
+        setState("success");
+        return;
+      }
+      attempts += 1;
+      if (attempts > 12) {
+        setState("error");
+        return;
+      }
+      setTimeout(() => void check(), 500);
+    };
+
+    void check();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (state !== "success") return;
-    const t = setTimeout(() => navigate({ to: "/dashboard", search: { tab: "overview" } }), 1200);
+    const t = setTimeout(
+      () => navigate({ to: "/dashboard", search: { tab: "overview" } }),
+      900,
+    );
     return () => clearTimeout(t);
   }, [state, navigate]);
 
@@ -71,9 +86,7 @@ function CallbackPage() {
             <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
               <Check className="size-6" />
             </span>
-            <h1 className="mt-5 font-fraunces text-xl font-bold">
-              Welcome, {DEMO_USER.name.split(" ")[0]}!
-            </h1>
+            <h1 className="mt-5 font-fraunces text-xl font-bold">Welcome, {name}!</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Redirecting you to the dashboard…
             </p>
@@ -87,7 +100,7 @@ function CallbackPage() {
             </span>
             <h1 className="mt-5 font-fraunces text-xl font-bold">Sign-in failed</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              We didn't receive an authorization code from Google.
+              We couldn't complete your Google sign-in. Please try again.
             </p>
             <Button className="mt-6" onClick={() => navigate({ to: "/login" })}>
               Try again

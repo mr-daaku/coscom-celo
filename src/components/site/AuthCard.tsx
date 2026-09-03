@@ -1,9 +1,10 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Zap } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SpotlightBackground } from "@/components/SpotlightBackground";
+import { signInWithGoogle } from "@/lib/auth";
 
 function GoogleMark() {
   return (
@@ -39,8 +40,21 @@ export function AuthCard({
   action: string;
   footer: ReactNode;
 }) {
-  const navigate = useNavigate();
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const start = async () => {
+    setPending(true);
+    setError(null);
+    const result = await signInWithGoogle();
+    if (result.error) {
+      setError(result.error.message ?? "Google sign-in failed. Please try again.");
+      setPending(false);
+      return;
+    }
+    if (result.redirected) return;
+    window.location.href = "/dashboard?tab=overview";
+  };
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 py-12">
@@ -69,14 +83,13 @@ export function AuthCard({
           <Button
             className="mt-7 h-12 w-full gap-3 bg-white text-[#1f1f1f] hover:bg-white/90"
             disabled={pending}
-            onClick={() => {
-              setPending(true);
-              navigate({ to: "/auth/google/callback", search: { code: "demo" } });
-            }}
+            onClick={() => void start()}
           >
             <GoogleMark />
-            {pending ? "Redirecting…" : action}
+            {pending ? "Connecting…" : action}
           </Button>
+
+          {error && <p className="mt-4 text-center text-sm text-destructive">{error}</p>}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">{footer}</p>
 
