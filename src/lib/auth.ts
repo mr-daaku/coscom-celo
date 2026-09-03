@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import { getGoogleAuthUrl } from "@/lib/google-auth.functions";
 
 export type Profile = {
   id: string;
@@ -76,8 +76,47 @@ export function useAuth() {
   };
 }
 
+export function googleRedirectUri() {
+  return `${window.location.origin}/auth/google/callback`;
+}
+
+/** Starts our own Google OAuth flow (credentials live only on the backend). */
 export async function signInWithGoogle() {
-  return lovable.auth.signInWithOAuth("google", {
-    redirect_uri: `${window.location.origin}/auth/google/callback`,
+  const result = await getGoogleAuthUrl({
+    data: { redirectUri: googleRedirectUri() },
   });
+  if (result.error || !result.url) {
+    return { error: new Error(result.error ?? "Google sign-in failed."), redirected: false };
+  }
+  window.location.assign(result.url);
+  return { error: null, redirected: true };
+}
+
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  fullName: string,
+) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin,
+      data: { full_name: fullName },
+    },
+  });
+  if (error) return { error, needsConfirmation: false };
+  return { error: null, needsConfirmation: !data.session };
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return { error };
+}
+
+export async function resetPassword(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  return { error };
 }

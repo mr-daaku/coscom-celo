@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Github, Linkedin, MessageCircle, Twitter, Zap } from "lucide-react";
+import { Github, Linkedin, MessageCircle, Twitter } from "lucide-react";
+
+import logo from "@/assets/logo.png";
 
 const COLUMNS = [
   {
@@ -23,9 +25,14 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Zap className="size-4" />
-              </span>
+              <img
+                src={logo}
+                alt="CosComPay logo"
+                width={32}
+                height={32}
+                loading="lazy"
+                className="size-8 rounded-xl"
+              />
               <span className="font-fraunces text-lg font-bold">CosComPay</span>
             </Link>
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">

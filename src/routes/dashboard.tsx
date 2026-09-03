@@ -20,10 +20,10 @@ import {
   Settings,
   Trash2,
   Wallet,
-  Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import logo from "@/assets/logo.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -185,9 +185,14 @@ function DashboardPage() {
         )}
       >
         <div className="flex h-16 items-center gap-2 px-5">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Zap className="size-4" />
-          </span>
+          <img
+            src={logo}
+            alt="CosComPay logo"
+            width={32}
+            height={32}
+            loading="lazy"
+            className="size-8 rounded-xl"
+          />
           <span className="font-fraunces text-lg font-bold">CosComPay</span>
         </div>
 
