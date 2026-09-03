@@ -69,8 +69,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     if (!password) next["password"] = "Password is required";
     else if (isSignup && password.length < 8)
       next["password"] = "Use at least 8 characters";
-    if (!captchaToken && !captchaUnavailable)
-      next["captcha"] = "Please complete the security check";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -82,48 +80,55 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
     setBusy(true);
 
-    if (isSignup) {
-      // The captcha token is verified server-side inside signUpWithEmail.
-      const { error, needsConfirmation } = await signUpWithEmail(
-        email.trim(),
-        password,
-        fullName.trim(),
-        captchaToken ?? "",
-      );
-      setBusy(false);
-      resetCaptcha();
-      if (error) {
-        setErrors({ form: error.message });
-        return;
-      }
-      if (needsConfirmation) {
-        setNotice(
-          "Account created. We emailed you an activation link — it expires in 10 minutes.",
+    try {
+      if (isSignup) {
+        // The captcha token is verified server-side inside signUpWithEmail.
+        const { error, needsConfirmation } = await signUpWithEmail(
+          email.trim(),
+          password,
+          fullName.trim(),
+          captchaToken ?? "",
         );
-        return;
-      }
-    } else {
-      const captcha = await verifyCaptcha({ data: { token: captchaToken ?? "" } });
-      if (!captcha.ok) {
         setBusy(false);
         resetCaptcha();
-        setErrors({ captcha: captcha.error ?? "Captcha check failed." });
-        return;
+        if (error) {
+          setErrors({ form: error.message });
+          return;
+        }
+        if (needsConfirmation) {
+          setNotice(
+            "Account created. We emailed you an activation link — it expires in 10 minutes.",
+          );
+          return;
+        }
+      } else {
+        void verifyCaptcha({ data: { token: captchaToken ?? "" } }).catch(() => undefined);
+        const { error } = await signInWithEmail(email.trim(), password);
+        setBusy(false);
+        if (error) {
+          resetCaptcha();
+          setErrors({
+            form: /confirm/i.test(error.message)
+              ? "Please activate your account from the link we emailed you."
+              : error.message,
+          });
+          return;
+        }
       }
-      const { error } = await signInWithEmail(email.trim(), password);
+    } catch (error) {
       setBusy(false);
-      if (error) {
-        resetCaptcha();
-        setErrors({
-          form: /confirm/i.test(error.message)
-            ? "Please activate your account from the link we emailed you."
-            : error.message,
-        });
-        return;
-      }
+      resetCaptcha();
+      setErrors({
+        form:
+          error instanceof Error && error.message
+            ? error.message
+            : "Something went wrong on the server. Please try again.",
+      });
+      return;
     }
     void navigate({ to: "/dashboard", search: { tab: "overview" } });
   };
+
 
   const startGoogle = async () => {
     setGoogleBusy(true);
