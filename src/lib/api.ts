@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 const PRODUCTION_ORIGINS = new Set([
