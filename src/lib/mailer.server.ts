@@ -1,55 +1,42 @@
 /**
- * Sends mail from the connected Gmail account (otp.coscom@gmail.com) through
- * the Lovable connector gateway — Workers cannot open SMTP connections, so the
- * Gmail HTTP API is used instead of an app password.
+ * Sends mail from otp.coscom@gmail.com over Gmail SMTP using a Google
+ * App Password. The Workers runtime has no raw `net` sockets, so this uses
+ * worker-mailer, which speaks SMTP over the runtime's TCP socket API.
  */
-
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
-
-const b64 = (s: string) =>
-  btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
-
-const header = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
-
-function rawEmail(opts: { to: string; subject: string; html: string; from: string }) {
-  const message = [
-    `From: ${header("CosComPay")} <${opts.from}>`,
-    `To: ${opts.to}`,
-    `Subject: ${header(opts.subject)}`,
-    "MIME-Version: 1.0",
-    'Content-Type: text/html; charset="UTF-8"',
-    "",
-    opts.html,
-  ].join("\r\n");
-  return b64(message).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+import { WorkerMailer } from "worker-mailer";
 
 export async function sendMail(opts: { to: string; subject: string; html: string }) {
-  const lovableKey = process.env["LOVABLE_API_KEY"];
-  const connectionKey = process.env["GOOGLE_MAIL_API_KEY"];
-  const from = process.env["GMAIL_USER"] ?? "otp.coscom@gmail.com";
+  const user = process.env["GMAIL_USER"];
+  const pass = process.env["GMAIL_APP_PASSWORD"];
 
-  if (!lovableKey || !connectionKey) {
-    return { sent: false, error: "Email sending is not connected yet." };
+  if (!user || !pass) {
+    return { sent: false, error: "Email sending is not configured yet." };
   }
 
-  const res = await fetch(`${GATEWAY_URL}/users/me/messages/send`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": connectionKey,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ raw: rawEmail({ ...opts, from }) }),
-  });
+  try {
+    const mailer = await WorkerMailer.connect({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // STARTTLS
+      credentials: { username: user, password: pass.replace(/\s+/g, "") },
+      authType: "plain",
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    console.error(`Gmail send failed [${res.status}]: ${body}`);
+    await mailer.send({
+      from: { name: "CosComPay", email: user },
+      to: { email: opts.to },
+      subject: opts.subject,
+      html: opts.html,
+    });
+
+    await mailer.close();
+    return { sent: true, error: null as string | null };
+  } catch (error) {
+    console.error("Gmail SMTP send failed", error);
     return { sent: false, error: "Could not send the email. Please try again." };
   }
-  return { sent: true, error: null as string | null };
 }
+
 
 export function emailShell(opts: {
   heading: string;
