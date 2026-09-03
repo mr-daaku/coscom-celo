@@ -52,7 +52,7 @@ export function Header() {
             </a>
           ))}
           <Link to="/workers" className="transition-colors hover:text-foreground">
-            Workers
+            Chain checker
           </Link>
         </nav>
 
