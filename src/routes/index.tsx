@@ -319,24 +319,35 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* SUPPORTED COINS / TRUSTED BY */}
-      <section className="py-16 border-y border-border bg-card/30">
+      {/* SUPPORTED COINS */}
+      <section id="coins" className="py-16 border-y border-border bg-card/30">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-70">
-            <div className="text-xs uppercase tracking-widest text-muted-foreground mr-4">Trusted worldwide</div>
-            {trustedBy.map((item, i) => (
-              <span key={item.name} className="text-2xl font-bold" style={{ fontFamily: item.serif ? "'Fraunces', serif" : "inherit" }}>
-                {item.name}
-              </span>
+          <div className="text-center" data-reveal>
+            <div className="text-xs uppercase tracking-widest text-primary">Supported coins</div>
+            <h2 className="mt-3 text-3xl md:text-4xl font-bold font-fraunces">
+              Accept the coins your customers actually hold.
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Native coins and stablecoins across 10 major networks — every payment verified on-chain.
+            </p>
+          </div>
+          <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" data-reveal>
+            {supportedCoins.map((coin) => (
+              <div
+                key={coin.symbol}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card/60 p-3 backdrop-blur-xl transition-transform hover:scale-[1.02]"
+              >
+                <img src={coin.image} alt={`${coin.name} logo`} className="size-9 shrink-0 object-contain" loading="lazy" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{coin.symbol}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{coin.chain}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section id="features" className="py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-3xl mb-16" data-reveal>
             <div className="text-sm uppercase tracking-widest text-primary mb-4">Why CosComPay</div>
             <h2 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] font-fraunces">
               Built for the next<br />century of money.
