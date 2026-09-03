@@ -248,6 +248,7 @@ export function WithdrawalsTab() {
 
   const submit = useMutation({
     mutationFn: async () => {
+      const selected = PAIRS[pair]!;
       return requestWithdrawal({
         data: { amount_usd: Number(amount), coin: selected.coin, chain: selected.chain, to_address: to },
       });

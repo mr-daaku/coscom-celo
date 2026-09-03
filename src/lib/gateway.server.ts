@@ -49,6 +49,39 @@ export {
   resolveAssetCode,
 } from "./assets";
 
+const FALLBACK_PRICES: Record<string, number> = {
+  bitcoin: 112480,
+  ethereum: 4284,
+  tether: 1,
+  "usd-coin": 1,
+  binancecoin: 600,
+  solana: 178.4,
+  tron: 0.28,
+  "the-open-network": 5.3,
+  "matic-network": 0.42,
+};
+
+const priceCache = new Map<string, { value: number; at: number }>();
+
+export async function priceUsd(cgId: string): Promise<number> {
+  const cached = priceCache.get(cgId);
+  if (cached && Date.now() - cached.at < 60_000) return cached.value;
+  try {
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(cgId)}&vs_currencies=usd`,
+      { headers: { accept: "application/json" } },
+    );
+    if (!res.ok) throw new Error(`price HTTP ${res.status}`);
+    const json = (await res.json()) as Record<string, { usd?: number }>;
+    const value = json[cgId]?.usd;
+    if (!value || !Number.isFinite(value)) throw new Error("no price");
+    priceCache.set(cgId, { value, at: Date.now() });
+    return value;
+  } catch {
+    return FALLBACK_PRICES[cgId] ?? 1;
+  }
+}
+
 /** Deposit address for a chain: merchant wallet first, platform address second. */
 export async function depositAddress(userId: string, chain: string): Promise<string> {
   const client = await admin();

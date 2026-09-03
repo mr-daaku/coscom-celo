@@ -47,7 +47,9 @@ function PayPage() {
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Button asChild>
-            <Link to="/dashboard">Go to dashboard</Link>
+            <Link to="/dashboard" search={{ tab: "overview" }}>
+              Go to dashboard
+            </Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/docs">Read the API docs</Link>
