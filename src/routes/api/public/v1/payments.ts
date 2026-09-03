@@ -54,6 +54,10 @@ export const Route = createFileRoute("/api/public/v1/payments")({
                 id: payment.id,
                 reference: payment.reference,
                 amount_usd: payment.amount_usd,
+                asset:
+                  payment.coin === g.ANY_ASSET
+                    ? g.ALL_CHAIN_CODE
+                    : g.assetCodeOf(payment.coin, payment.chain),
                 coin: payment.coin,
                 chain: payment.chain,
                 crypto_amount: payment.crypto_amount,
