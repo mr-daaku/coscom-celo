@@ -78,7 +78,9 @@ export function SpotlightBackground() {
 /** Fades in [data-reveal] elements as they scroll into view. */
 export function useScrollReveal() {
   useEffect(() => {
+    document.documentElement.classList.add("js-reveal");
     const reveal = (el: Element) => el.classList.add("revealed");
+
     const inView = (el: Element) => {
       const r = el.getBoundingClientRect();
       return r.top < window.innerHeight && r.bottom > 0;
