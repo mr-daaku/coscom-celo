@@ -4,7 +4,7 @@
  *
  *   import { CosComPay } from "https://coscomai.xyz/sdk/coscompay.js";
  *   const pay = new CosComPay(process.env.COSCOMPAY_API_KEY);
- *   const charge = await pay.createPayment({ amount_usd: 49.99, coin: "USDT", chain: "TRON" });
+ *   const charge = await pay.createPayment({ amount_usd: 49.99, asset: "BEP20-USDT" });
  *   // redirect the buyer to charge.checkout_url
  */
 
