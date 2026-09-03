@@ -16,10 +16,9 @@ const NAV = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<CoscomUser | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    setUser(readUser());
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
