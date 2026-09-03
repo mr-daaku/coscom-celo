@@ -7,7 +7,7 @@ import { DEMO_USER, writeUser } from "@/lib/coscom";
 
 export const Route = createFileRoute("/auth/google/callback")({
   validateSearch: (search: Record<string, unknown>) => ({
-    code: typeof search.code === "string" ? search.code : "",
+    code: typeof search["code"] === "string" ? (search["code"] as string) : "",
   }),
   head: () => ({
     meta: [
