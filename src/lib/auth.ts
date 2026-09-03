@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
-import { supabase } from "@/integrations/supabase/client";
-import { getGoogleAuthUrl } from "@/lib/google-auth.functions";
+import { api } from "@/lib/api";
 
 
 export type Profile = {
@@ -38,11 +37,11 @@ export function useAuth() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data } = api.auth.onStateChange((_event, next) => {
       setSession(next);
       setReady(true);
     });
-    void supabase.auth.getSession().then(({ data: got }) => {
+    void api.auth.session().then(({ data: got }) => {
       setSession(got.session);
       setReady(true);
     });
@@ -56,11 +55,8 @@ export function useAuth() {
       setProfile(null);
       return;
     }
-    void supabase
-      .from("profiles")
-      .select("id, email, full_name, avatar_url")
-      .eq("id", userId)
-      .maybeSingle()
+    void api.profiles
+      .get(userId)
       .then(({ data }) => setProfile((data as Profile | null) ?? null));
   }, [userId]);
 
@@ -72,23 +68,12 @@ export function useAuth() {
     name: displayName(session?.user ?? null, profile),
     email: session?.user.email ?? profile?.email ?? "",
     signOut: async () => {
-      await supabase.auth.signOut();
+      await api.auth.signOut();
     },
   };
 }
 
-export function googleRedirectUri() {
-  return `${window.location.origin}/auth/google/callback`;
-}
-
-/** Starts our own Google OAuth flow (credentials live only on the backend). */
 export async function signInWithGoogle() {
-  const result = await getGoogleAuthUrl({
-    data: { redirectUri: googleRedirectUri() },
-  });
-  if (result.error || !result.url) {
-    return { error: new Error(result.error ?? "Google sign-in failed."), redirected: false };
-  }
-  window.location.assign(result.url);
-  return { error: null, redirected: true };
+  const { error } = await api.auth.signInWithGoogle();
+  return { error, redirected: !error };
 }
