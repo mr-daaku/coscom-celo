@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 import { DEPOSIT_ADDRESSES, NETWORK_COLORS } from "@/lib/coscom";
 
 const COINS = [
-  { symbol: "BTC", name: "Bitcoin", network: "Bitcoin", rate: 112480, decimals: 6 },
-  { symbol: "ETH", name: "Ethereum", network: "Ethereum", rate: 4284, decimals: 5 },
-  { symbol: "USDT", name: "Tether", network: "TRON", rate: 1, decimals: 2 },
-  { symbol: "SOL", name: "Solana", network: "Solana", rate: 178.4, decimals: 4 },
+  { symbol: "BTC", name: "Bitcoin", network: "Bitcoin", rate: 112480, decimals: 6, image: "/assets/btc.png" },
+  { symbol: "ETH", name: "Ethereum", network: "Ethereum", rate: 4284, decimals: 5, image: "/assets/eth.png" },
+  { symbol: "USDT", name: "Tether", network: "TRON", rate: 1, decimals: 2, image: "/assets/usdt.png" },
+  { symbol: "SOL", name: "Solana", network: "Solana", rate: 178.4, decimals: 4, image: "/assets/sol.png" },
 ];
 
 export function CheckoutDemo({ amount = 249 }: { amount?: number }) {
@@ -65,7 +65,10 @@ export function CheckoutDemo({ amount = 249 }: { amount?: number }) {
                 : "border-border bg-muted/40 text-muted-foreground",
             )}
           >
-            <span className="font-mono text-xs font-bold">{c.symbol}</span>
+            <span className="flex items-center justify-center gap-1.5 font-mono text-xs font-bold">
+              <img src={c.image} alt="" className="size-5 object-contain" />
+              {c.symbol}
+            </span>
           </button>
         ))}
       </div>
