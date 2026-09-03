@@ -107,12 +107,15 @@ function AdminPage() {
             This console is limited to the platform owner account.
           </p>
           <Button className="mt-6 w-full" asChild>
-            user ? (
-              <Link to="/dashboard" search={{ tab: "overview" }}>Back to dashboard</Link>
+            {user ? (
+              <Link to="/dashboard" search={{ tab: "overview" }}>
+                Back to dashboard
+              </Link>
             ) : (
               <Link to="/login">Sign in</Link>
-            )
+            )}
           </Button>
+
         </Card>
       </main>
     );
