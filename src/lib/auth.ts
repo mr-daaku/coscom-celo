@@ -3,7 +3,6 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getGoogleAuthUrl } from "@/lib/google-auth.functions";
-import { requestPasswordReset, signUpAccount } from "@/lib/account.functions";
 
 
 export type Profile = {
@@ -93,28 +92,3 @@ export async function signInWithGoogle() {
   window.location.assign(result.url);
   return { error: null, redirected: true };
 }
-
-export async function signUpWithEmail(
-  email: string,
-  password: string,
-  fullName: string,
-  captchaToken: string,
-) {
-  const { error } = await signUpAccount({
-    data: { email, password, fullName, captchaToken, origin: window.location.origin },
-  });
-  return { error: error ? new Error(error) : null, needsConfirmation: !error };
-}
-
-export async function signInWithEmail(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  return { error };
-}
-
-export async function resetPassword(email: string, captchaToken: string) {
-  const { error } = await requestPasswordReset({
-    data: { email, captchaToken, origin: window.location.origin },
-  });
-  return { error: error ? new Error(error) : null };
-}
-

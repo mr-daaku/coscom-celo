@@ -7,6 +7,9 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // Explicit (empty) plugins array so external build tooling (e.g. Cloudflare's
+  // Vite config scanner) can find and augment it. Lovable adds its own plugins.
+  plugins: [],
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
