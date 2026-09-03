@@ -210,13 +210,16 @@
 
 @layer utilities {
   [data-reveal] {
+    opacity: 1;
+  }
+  html.js-reveal [data-reveal] {
     opacity: 0;
     transform: translateY(24px);
     transition:
       opacity 0.7s ease,
       transform 0.7s ease;
   }
-  [data-reveal].revealed {
+  html.js-reveal [data-reveal].revealed {
     opacity: 1;
     transform: none;
   }
