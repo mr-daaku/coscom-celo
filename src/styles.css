@@ -142,55 +142,97 @@
     color: var(--color-foreground);
   }
 }
-
-/* ── CoinRail crypto gateway theme: deep slate + neon mint ── */
-:root {
-  --radius: 0.875rem;
-  --background: oklch(0.16 0.028 264);
-  --foreground: oklch(0.97 0.008 250);
-  --card: oklch(0.21 0.032 264);
-  --card-foreground: oklch(0.97 0.008 250);
-  --popover: oklch(0.21 0.032 264);
-  --popover-foreground: oklch(0.97 0.008 250);
-  --primary: oklch(0.82 0.19 158);
-  --primary-foreground: oklch(0.18 0.04 165);
-  --secondary: oklch(0.27 0.035 262);
-  --secondary-foreground: oklch(0.97 0.008 250);
-  --muted: oklch(0.26 0.03 262);
-  --muted-foreground: oklch(0.72 0.03 258);
-  --accent: oklch(0.78 0.16 78);
-  --accent-foreground: oklch(0.2 0.04 78);
-  --destructive: oklch(0.66 0.21 22);
-  --destructive-foreground: oklch(0.98 0.005 250);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.82 0.19 158);
-  --sidebar: oklch(0.19 0.03 264);
-  --sidebar-foreground: oklch(0.97 0.008 250);
-  --sidebar-primary: oklch(0.82 0.19 158);
-  --sidebar-primary-foreground: oklch(0.18 0.04 165);
-  --sidebar-accent: oklch(0.27 0.035 262);
-  --sidebar-accent-foreground: oklch(0.97 0.008 250);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.82 0.19 158);
-  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+/* ══ CosComPay theme — always dark, lime green accents ══ */
+:root,
+.dark {
+  --radius: 1rem;
+  --background: #0e1111;
+  --foreground: #ecf1ee;
+  --card: #171c1c;
+  --card-foreground: #ecf1ee;
+  --popover: #171c1c;
+  --popover-foreground: #ecf1ee;
+  --primary: #a3e635;
+  --primary-foreground: #0b0b0f;
+  --secondary: #232a2a;
+  --secondary-foreground: #ecf1ee;
+  --muted: #232a2a;
+  --muted-foreground: #9ba39e;
+  --accent: #38bdf8;
+  --accent-foreground: #0b0b0f;
+  --destructive: #e5484d;
+  --destructive-foreground: #ecf1ee;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --surface: #1d2323;
+  --border: #2e3838;
+  --input: #2e3838;
+  --ring: #a3e635;
+  --sidebar: #090b0b;
+  --sidebar-foreground: #ecf1ee;
+  --sidebar-primary: #a3e635;
+  --sidebar-primary-foreground: #0b0b0f;
+  --sidebar-accent: #171c1c;
+  --sidebar-accent-foreground: #ecf1ee;
+  --sidebar-border: #2e3838;
+  --sidebar-ring: #a3e635;
+  --font-fraunces: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono-code: "JetBrains Mono", ui-monospace, monospace;
 }
 
 @theme inline {
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-surface: var(--surface);
   --font-sans: var(--font-body);
-  --font-display: var(--font-display);
+  --font-mono: var(--font-mono-code);
+  --font-fraunces: var(--font-fraunces);
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
   body {
     font-family: var(--font-body);
-    background-image:
-      radial-gradient(60rem 40rem at 85% -10%, oklch(0.82 0.19 158 / 12%), transparent 70%),
-      radial-gradient(50rem 35rem at 0% 100%, oklch(0.6 0.18 280 / 14%), transparent 70%);
-    background-attachment: fixed;
+    background-color: var(--background);
+    color: var(--foreground);
   }
-  h1, h2, h3, .font-display {
-    font-family: var(--font-display);
+  h1, h2, h3 {
+    font-family: var(--font-fraunces);
   }
+}
+
+@utility font-fraunces {
+  font-family: var(--font-fraunces);
+}
+
+@layer utilities {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s ease;
+  }
+  [data-reveal].revealed {
+    opacity: 1;
+    transform: none;
+  }
+  @keyframes coscom-slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .animate-slide-down { animation: coscom-slide-down 0.22s ease-out; }
+  @keyframes coscom-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-fade-in { animation: coscom-fade-in 0.2s ease-out; }
+  @keyframes coscom-scale-in {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: none; }
+  }
+  .animate-scale-in { animation: coscom-scale-in 0.24s ease-out; }
 }
