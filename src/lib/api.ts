@@ -12,9 +12,8 @@ function currentOrigin() {
   const origin = window.location.origin;
   const isLocalDevelopment =
     window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-  const isLovablePreview = window.location.hostname.endsWith(".lovable.app");
 
-  if (PRODUCTION_ORIGINS.has(origin) || isLocalDevelopment || isLovablePreview) return origin;
+  if (PRODUCTION_ORIGINS.has(origin) || isLocalDevelopment) return origin;
   throw new Error("Sign-in is not available from this domain.");
 }
 
