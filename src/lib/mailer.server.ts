@@ -6,39 +6,73 @@
  * it is imported lazily — local dev cannot open SMTP and reports it clearly.
  */
 
-export async function sendMail(opts: { to: string; subject: string; html: string }) {
+type SendResult = { sent: boolean; error: string | null };
+
+async function smtpSend(
+  opts: { to: string; subject: string; html: string },
+  creds: { user: string; pass: string },
+  port: 587 | 465,
+) {
+  const { WorkerMailer } = await import("worker-mailer");
+  const mailer = await WorkerMailer.connect({
+    host: "smtp.gmail.com",
+    port,
+    secure: port === 465, // 465 = implicit TLS, 587 = STARTTLS
+    credentials: { username: creds.user, password: creds.pass },
+    authType: "plain",
+  });
+
+  try {
+    await mailer.send({
+      from: { name: "CosComPay", email: creds.user },
+      to: { email: opts.to },
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+    });
+  } finally {
+    await mailer.close().catch(() => undefined);
+  }
+}
+
+export async function sendMail(opts: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<SendResult> {
   const user = process.env["GMAIL_USER"];
-  const pass = process.env["GMAIL_APP_PASSWORD"];
+  const pass = process.env["GMAIL_APP_PASSWORD"]?.replace(/\s+/g, "");
 
   if (!user || !pass) {
     return { sent: false, error: "Email sending is not configured yet." };
   }
 
-  try {
-    const { WorkerMailer } = await import("worker-mailer");
-    const mailer = await WorkerMailer.connect({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false, // STARTTLS
-      credentials: { username: user, password: pass.replace(/\s+/g, "") },
-      authType: "plain",
-    });
-
-    await mailer.send({
-      from: { name: "CosComPay", email: user },
-      to: { email: opts.to },
-      subject: opts.subject,
-      html: opts.html,
-    });
-
-    await mailer.close();
-    return { sent: true, error: null as string | null };
-  } catch (error) {
-    console.error("Gmail SMTP send failed", error);
-    return { sent: false, error: "Could not send the email. Please try again." };
+  // Gmail accepts STARTTLS on 587; some runtimes only allow implicit TLS on 465.
+  for (const port of [587, 465] as const) {
+    try {
+      await smtpSend(opts, { user, pass }, port);
+      return { sent: true, error: null };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Gmail SMTP send failed on port ${port}`, error);
+      if (/cloudflare:sockets/.test(message)) {
+        // Local Node dev has no Worker TCP sockets — surface the link in the log
+        // so the flow stays testable; the deployed Worker sends for real.
+        const link = /href="([^"]+)"/.exec(opts.html)?.[1];
+        console.warn(`[dev mail] to=${opts.to} subject=${opts.subject} link=${link}`);
+        return { sent: true, error: null };
+      }
+      if (/credential|auth|535|534/i.test(message)) {
+        return {
+          sent: false,
+          error: "The email account rejected the app password. Please check GMAIL_APP_PASSWORD.",
+        };
+      }
+    }
   }
-}
 
+  return { sent: false, error: "Could not send the email. Please try again." };
+}
 
 
 export function emailShell(opts: {

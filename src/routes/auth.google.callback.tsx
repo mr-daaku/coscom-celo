@@ -77,8 +77,20 @@ function CallbackPage() {
       setState("success");
     };
 
-    void run();
+    void run().catch((error: unknown) => {
+      // Without this the page hangs forever on "Signing you in…" whenever the
+      // server function throws (e.g. missing backend env bindings on a
+      // self-hosted deployment).
+      console.error("google callback failed", error);
+      setMessage(
+        error instanceof Error && error.message
+          ? error.message
+          : "The server could not complete the Google sign-in. Please try again.",
+      );
+      setState("error");
+    });
   }, []);
+
 
   useEffect(() => {
     if (state !== "success") return undefined;

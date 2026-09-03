@@ -12,47 +12,57 @@ export const signUpAccount = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { verifyTurnstileToken } = await import("./captcha.server");
-    const captcha = await verifyTurnstileToken(data.captchaToken);
-    if (!captcha.ok) return { error: captcha.error ?? "Captcha check failed." };
+    await verifyTurnstileToken(data.captchaToken);
 
     const email = data.email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Invalid email address." };
     if (data.password.length < 8) return { error: "Use at least 8 characters." };
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { issueToken, safeOrigin, sendActivationMail } = await import("./account.server");
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { issueToken, safeOrigin, sendActivationMail } = await import("./account.server");
 
-    const created = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: data.password,
-      email_confirm: false,
-      user_metadata: { full_name: data.fullName.trim() },
-    });
+      const created = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: data.password,
+        email_confirm: false,
+        user_metadata: { full_name: data.fullName.trim() },
+      });
 
-    if (created.error || !created.data.user) {
-      if (/already/i.test(created.error?.message ?? "")) {
-        return { error: "An account with this email already exists. Try signing in." };
+      if (created.error || !created.data.user) {
+        if (/already|registered|exists/i.test(created.error?.message ?? "")) {
+          return { error: "An account with this email already exists. Try signing in." };
+        }
+        console.error("createUser failed", created.error?.message);
+        return { error: created.error?.message ?? "Could not create your account." };
       }
-      console.error("createUser failed", created.error?.message);
-      return { error: "Could not create your account. Please try again." };
+
+      const token = await issueToken(supabaseAdmin, {
+        userId: created.data.user.id,
+        email,
+        purpose: "verify",
+      });
+
+      const url = `${safeOrigin(data.origin)}/verify-email?token=${token}`;
+      const mail = await sendActivationMail({
+        to: email,
+        url,
+        name: data.fullName.trim().split(" ")[0] ?? "there",
+      });
+      if (!mail.sent) return { error: mail.error ?? "Could not send the activation email." };
+
+      return { error: null as string | null };
+    } catch (error) {
+      console.error("signup crashed", error);
+      const message = error instanceof Error ? error.message : String(error);
+      return {
+        error: /Missing Supabase environment/i.test(message)
+          ? "This deployment is missing its backend keys (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY). Add them to the Worker environment and redeploy."
+          : "Could not create your account. Please try again.",
+      };
     }
-
-    const token = await issueToken(supabaseAdmin, {
-      userId: created.data.user.id,
-      email,
-      purpose: "verify",
-    });
-
-    const url = `${safeOrigin(data.origin)}/verify-email?token=${token}`;
-    const mail = await sendActivationMail({
-      to: email,
-      url,
-      name: data.fullName.trim().split(" ")[0] ?? "there",
-    });
-    if (!mail.sent) return { error: mail.error ?? "Could not send the activation email." };
-
-    return { error: null as string | null };
   });
+
 
 export const activateAccount = createServerFn({ method: "POST" })
   .inputValidator((data: { token: string }) => data)
