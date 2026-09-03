@@ -10,21 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DocsRouteImport } from './routes/docs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WorkersRouteImport } from './routes/workers'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth.google.callback'
+import { Route as ApiPublicV1PaymentsRouteImport } from './routes/api/public/v1/payments'
+import { Route as ApiPublicV1PaymentsReferenceRouteImport } from './routes/api/public/v1/payments.$reference'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsRoute = DocsRouteImport.update({
+  id: '/docs',
+  path: '/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -52,73 +66,111 @@ const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
   path: '/auth/google/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1PaymentsRoute = ApiPublicV1PaymentsRouteImport.update({
+  id: '/api/public/v1/payments',
+  path: '/api/public/v1/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1PaymentsReferenceRoute =
+  ApiPublicV1PaymentsReferenceRouteImport.update({
+    id: '/$reference',
+    path: '/$reference',
+    getParentRoute: () => ApiPublicV1PaymentsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
+  '/docs': typeof DocsRoute
   '/login': typeof LoginRoute
   '/pay': typeof PayRoute
   '/signup': typeof SignupRoute
   '/workers': typeof WorkersRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
+  '/api/public/v1/payments': typeof ApiPublicV1PaymentsRouteWithChildren
+  '/api/public/v1/payments/$reference': typeof ApiPublicV1PaymentsReferenceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
+  '/docs': typeof DocsRoute
   '/login': typeof LoginRoute
   '/pay': typeof PayRoute
   '/signup': typeof SignupRoute
   '/workers': typeof WorkersRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
+  '/api/public/v1/payments': typeof ApiPublicV1PaymentsRouteWithChildren
+  '/api/public/v1/payments/$reference': typeof ApiPublicV1PaymentsReferenceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
+  '/docs': typeof DocsRoute
   '/login': typeof LoginRoute
   '/pay': typeof PayRoute
   '/signup': typeof SignupRoute
   '/workers': typeof WorkersRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
+  '/api/public/v1/payments': typeof ApiPublicV1PaymentsRouteWithChildren
+  '/api/public/v1/payments/$reference': typeof ApiPublicV1PaymentsReferenceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/dashboard'
+    | '/docs'
     | '/login'
     | '/pay'
     | '/signup'
     | '/workers'
     | '/auth/google/callback'
+    | '/api/public/v1/payments'
+    | '/api/public/v1/payments/$reference'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/dashboard'
+    | '/docs'
     | '/login'
     | '/pay'
     | '/signup'
     | '/workers'
     | '/auth/google/callback'
+    | '/api/public/v1/payments'
+    | '/api/public/v1/payments/$reference'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/dashboard'
+    | '/docs'
     | '/login'
     | '/pay'
     | '/signup'
     | '/workers'
     | '/auth/google/callback'
+    | '/api/public/v1/payments'
+    | '/api/public/v1/payments/$reference'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRoute
+  DocsRoute: typeof DocsRoute
   LoginRoute: typeof LoginRoute
   PayRoute: typeof PayRoute
   SignupRoute: typeof SignupRoute
   WorkersRoute: typeof WorkersRoute
   AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
+  ApiPublicV1PaymentsRoute: typeof ApiPublicV1PaymentsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -130,11 +182,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs': {
+      id: '/docs'
+      path: '/docs'
+      fullPath: '/docs'
+      preLoaderRoute: typeof DocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -172,17 +238,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthGoogleCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/payments': {
+      id: '/api/public/v1/payments'
+      path: '/api/public/v1/payments'
+      fullPath: '/api/public/v1/payments'
+      preLoaderRoute: typeof ApiPublicV1PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/payments/$reference': {
+      id: '/api/public/v1/payments/$reference'
+      path: '/$reference'
+      fullPath: '/api/public/v1/payments/$reference'
+      preLoaderRoute: typeof ApiPublicV1PaymentsReferenceRouteImport
+      parentRoute: typeof ApiPublicV1PaymentsRoute
+    }
   }
 }
 
+interface ApiPublicV1PaymentsRouteChildren {
+  ApiPublicV1PaymentsReferenceRoute: typeof ApiPublicV1PaymentsReferenceRoute
+}
+
+const ApiPublicV1PaymentsRouteChildren: ApiPublicV1PaymentsRouteChildren = {
+  ApiPublicV1PaymentsReferenceRoute: ApiPublicV1PaymentsReferenceRoute,
+}
+
+const ApiPublicV1PaymentsRouteWithChildren =
+  ApiPublicV1PaymentsRoute._addFileChildren(ApiPublicV1PaymentsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   DashboardRoute: DashboardRoute,
+  DocsRoute: DocsRoute,
   LoginRoute: LoginRoute,
   PayRoute: PayRoute,
   SignupRoute: SignupRoute,
   WorkersRoute: WorkersRoute,
   AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
+  ApiPublicV1PaymentsRoute: ApiPublicV1PaymentsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
