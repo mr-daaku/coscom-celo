@@ -184,14 +184,18 @@ export const rotateWebhookSecret = createServerFn({ method: "POST" })
     return { webhook_secret: secret };
   });
 
+const assetCode = z.string().trim().min(2).max(24);
+
 export const createPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
         amount_usd: z.number().positive().max(1_000_000),
-        coin: z.string().trim().max(10),
-        chain: z.string().trim().max(20),
+        /** Asset code, e.g. BEP20-USDT, ERC20-USDT, TRX, BNB or ALL-CHAIN-COIN. */
+        asset: assetCode.optional(),
+        coin: z.string().trim().max(10).optional(),
+        chain: z.string().trim().max(20).optional(),
         description: z.string().trim().max(200).optional(),
         customer_email: z.string().trim().email().max(120).optional(),
       })
@@ -204,8 +208,9 @@ export const createPayment = createServerFn({ method: "POST" })
 
 type CreateInput = {
   amount_usd: number;
-  coin: string;
-  chain: string;
+  asset?: string | undefined;
+  coin?: string | undefined;
+  chain?: string | undefined;
   description?: string | undefined;
   customer_email?: string | undefined;
 };
@@ -215,20 +220,39 @@ export async function createPaymentRecord(
   userId: string,
   data: CreateInput,
 ): Promise<PaymentDTO> {
-  const asset = g.assetFor(data.coin, data.chain);
-  if (!asset) throw new Error(`Unsupported coin/network pair: ${data.coin} on ${data.chain}`);
+  const code = data.asset ?? (data.coin && data.chain ? g.assetCodeOf(data.coin, data.chain) : "");
+  if (!code) {
+    throw new Error(
+      `Provide an asset code, e.g. "BEP20-USDT", "ERC20-USDT", "TRX", "BNB" or "${g.ALL_CHAIN_CODE}".`,
+    );
+  }
+  const resolved = g.resolveAssetCode(code);
 
   const { account, plan } = await g.assertPaymentAllowed(userId, data.amount_usd);
-  const price = await g.priceUsd(asset.cgId);
-  const depositAddress = await g.depositAddress(userId, asset.chain);
   const feeUsd = Number(((data.amount_usd * plan.feePercent) / 100).toFixed(2));
+
+  let coin = g.ANY_ASSET;
+  let chain = g.ANY_ASSET;
+  let cryptoAmount: number | null = null;
+  let depositAddress = g.ANY_ADDRESS;
+
+  if (resolved.kind === "asset") {
+    const asset = g.assetFor(resolved.coin, resolved.chain);
+    if (!asset) throw new Error(`Unsupported asset code: ${code}`);
+    const price = await g.priceUsd(asset.cgId);
+    coin = asset.coin;
+    chain = asset.chain;
+    cryptoAmount = Number((data.amount_usd / price).toFixed(asset.decimals));
+    depositAddress = await g.depositAddress(userId, asset.chain);
+  }
+
   const record = {
     user_id: userId,
     reference: g.newReference(),
     amount_usd: data.amount_usd,
-    coin: asset.coin,
-    chain: asset.chain,
-    crypto_amount: Number((data.amount_usd / price).toFixed(asset.decimals)),
+    coin,
+    chain,
+    crypto_amount: cryptoAmount,
     deposit_address: depositAddress,
     fee_percent: plan.feePercent,
     fee_usd: feeUsd,
