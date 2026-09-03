@@ -12,7 +12,9 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { RealCheckout } from "@/components/RealCheckout";
 import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,10 @@ import {
 } from "@/lib/coscom";
 
 export const Route = createFileRoute("/pay")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    ref: typeof search["ref"] === "string" ? search["ref"] : undefined,
+  }),
+
   head: () => ({
     meta: [
       { title: "Pay with Crypto — CosComPay Hosted Checkout" },
@@ -95,7 +101,14 @@ function Confetti({ active }: { active: boolean }) {
 }
 
 function PayPage() {
+  const { ref } = Route.useSearch();
+  if (ref) return <RealCheckout reference={ref} />;
+  return <DemoCheckout />;
+}
+
+function DemoCheckout() {
   const [step, setStep] = useState(0);
+
   const [token, setToken] = useState<(typeof TOKENS)[number] | null>(null);
   const [network, setNetwork] = useState<{
     chain: string;

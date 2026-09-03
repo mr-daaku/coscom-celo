@@ -1,5 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { BadgeDollarSign, Banknote, ShieldCheck } from "lucide-react";
+
+import { AccountTab, BillingTab, ChargesTab, WithdrawalsTab } from "@/components/dashboard/GatewayTabs";
+import { amIAdmin } from "@/lib/admin.functions";
+
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -38,13 +43,18 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "charges", label: "Payments", icon: CreditCard },
+  { id: "billing", label: "Billing & Plans", icon: BadgeDollarSign },
+  { id: "withdrawals", label: "Withdrawals", icon: Banknote },
   { id: "api-keys", label: "API Keys", icon: KeyRound },
-  { id: "payments", label: "Payments", icon: CreditCard },
+  { id: "payments", label: "On-chain TXs", icon: ArrowDownLeft },
   { id: "invoices", label: "Invoices", icon: FileText },
   { id: "wallets", label: "Wallets", icon: Wallet },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "account", label: "Account", icon: Settings },
+  { id: "settings", label: "Profile", icon: Settings },
 ] as const;
+
 
 type TabId = (typeof TABS)[number]["id"];
 
@@ -149,6 +159,14 @@ function DashboardPage() {
   const navigate = useNavigate();
   const { ready, user, name, email, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const adminCheck = useQuery({
+    queryKey: ["am-i-admin"],
+    enabled: Boolean(user),
+    retry: false,
+    queryFn: () => amIAdmin(),
+  });
+  const isAdmin = adminCheck.data?.admin ?? false;
+
 
   if (!ready) {
     return (
@@ -214,7 +232,18 @@ function DashboardPage() {
               {t.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+            >
+              <ShieldCheck className="size-4" />
+              Admin console
+            </Link>
+          )}
         </nav>
+
 
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
@@ -265,12 +294,17 @@ function DashboardPage() {
 
         <div className="p-4 sm:p-6 lg:p-8">
           {active.id === "overview" && <OverviewTab userId={user.id} firstName={name.split(" ")[0] ?? name} />}
+          {active.id === "charges" && <ChargesTab />}
+          {active.id === "billing" && <BillingTab />}
+          {active.id === "withdrawals" && <WithdrawalsTab />}
+          {active.id === "account" && <AccountTab />}
           {active.id === "api-keys" && <ApiKeysTab userId={user.id} />}
           {active.id === "payments" && <PaymentsTab userId={user.id} />}
           {active.id === "invoices" && <InvoicesTab userId={user.id} />}
           {active.id === "wallets" && <WalletsTab userId={user.id} />}
           {active.id === "analytics" && <AnalyticsTab userId={user.id} />}
           {active.id === "settings" && <SettingsTab userId={user.id} name={name} email={email} />}
+
         </div>
       </div>
     </div>

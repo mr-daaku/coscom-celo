@@ -47,6 +47,27 @@ export type Database = {
         }
         Relationships: []
       }
+      api_rate_limits: {
+        Row: {
+          bucket: string
+          count: number
+          id: string
+          window_start: string
+        }
+        Insert: {
+          bucket: string
+          count?: number
+          id?: string
+          window_start: string
+        }
+        Update: {
+          bucket?: string
+          count?: number
+          id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       auth_tokens: {
         Row: {
           created_at: string
@@ -115,6 +136,168 @@ export type Database = {
           id?: string
           number?: string
           status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      merchant_accounts: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          payout_address: string | null
+          payout_chain: string | null
+          plan: string
+          plan_expires_at: string | null
+          plan_status: string
+          support_email: string | null
+          suspended: boolean
+          updated_at: string
+          user_id: string
+          webhook_secret: string
+          webhook_url: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          payout_address?: string | null
+          payout_chain?: string | null
+          plan?: string
+          plan_expires_at?: string | null
+          plan_status?: string
+          support_email?: string | null
+          suspended?: boolean
+          updated_at?: string
+          user_id: string
+          webhook_secret?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          payout_address?: string | null
+          payout_chain?: string | null
+          plan?: string
+          plan_expires_at?: string | null
+          plan_status?: string
+          support_email?: string | null
+          suspended?: boolean
+          updated_at?: string
+          user_id?: string
+          webhook_secret?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount_usd: number
+          chain: string
+          coin: string
+          confirmations: number
+          created_at: string
+          crypto_amount: number | null
+          customer_email: string | null
+          deposit_address: string
+          description: string | null
+          expires_at: string
+          fee_percent: number
+          fee_usd: number
+          id: string
+          metadata: Json
+          net_usd: number
+          paid_at: string | null
+          reference: string
+          status: string
+          tx_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_usd: number
+          chain: string
+          coin: string
+          confirmations?: number
+          created_at?: string
+          crypto_amount?: number | null
+          customer_email?: string | null
+          deposit_address: string
+          description?: string | null
+          expires_at?: string
+          fee_percent: number
+          fee_usd?: number
+          id?: string
+          metadata?: Json
+          net_usd?: number
+          paid_at?: string | null
+          reference: string
+          status?: string
+          tx_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_usd?: number
+          chain?: string
+          coin?: string
+          confirmations?: number
+          created_at?: string
+          crypto_amount?: number | null
+          customer_email?: string | null
+          deposit_address?: string
+          description?: string | null
+          expires_at?: string
+          fee_percent?: number
+          fee_usd?: number
+          id?: string
+          metadata?: Json
+          net_usd?: number
+          paid_at?: string | null
+          reference?: string
+          status?: string
+          tx_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plan_payments: {
+        Row: {
+          chain: string
+          coin: string
+          created_at: string
+          deposit_address: string
+          expires_at: string
+          id: string
+          paid_at: string | null
+          plan: string
+          price_usd: number
+          status: string
+          tx_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          chain: string
+          coin: string
+          created_at?: string
+          deposit_address: string
+          expires_at?: string
+          id?: string
+          paid_at?: string | null
+          plan: string
+          price_usd: number
+          status?: string
+          tx_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          chain?: string
+          coin?: string
+          created_at?: string
+          deposit_address?: string
+          expires_at?: string
+          id?: string
+          paid_at?: string | null
+          plan?: string
+          price_usd?: number
+          status?: string
+          tx_hash?: string | null
           user_id?: string
         }
         Relationships: []
@@ -200,6 +383,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           address: string
@@ -230,15 +434,70 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          amount_usd: number
+          chain: string
+          coin: string
+          created_at: string
+          fee_percent: number
+          fee_usd: number
+          id: string
+          net_usd: number
+          processed_at: string | null
+          status: string
+          to_address: string
+          tx_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_usd: number
+          chain: string
+          coin: string
+          created_at?: string
+          fee_percent: number
+          fee_usd?: number
+          id?: string
+          net_usd?: number
+          processed_at?: string | null
+          status?: string
+          to_address: string
+          tx_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_usd?: number
+          chain?: string
+          coin?: string
+          created_at?: string
+          fee_percent?: number
+          fee_usd?: number
+          id?: string
+          net_usd?: number
+          processed_at?: string | null
+          status?: string
+          to_address?: string
+          tx_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      monthly_volume_usd: { Args: { _user_id: string }; Returns: number }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "merchant"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -365,6 +624,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "merchant"],
+    },
   },
 } as const
