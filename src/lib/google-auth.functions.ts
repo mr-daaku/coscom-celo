@@ -17,7 +17,7 @@ export const getGoogleAuthUrl = createServerFn({ method: "POST" })
   .inputValidator((data: { redirectUri: string; state?: string }) => data)
   .handler(async ({ data }) => {
     const clientId = process.env["GOOGLE_CLIENT_ID"];
-    if (!clientId) return { error: "Google sign-in is not configured." as string, url: null };
+    if (!clientId) return { error: "Google sign-in is not configured on this deployment (missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET environment variables)." as string, url: null };
 
     const params = new URLSearchParams({
       client_id: clientId,
@@ -42,7 +42,7 @@ export const exchangeGoogleCode = createServerFn({ method: "POST" })
     const clientId = process.env["GOOGLE_CLIENT_ID"];
     const clientSecret = process.env["GOOGLE_CLIENT_SECRET"];
     if (!clientId || !clientSecret) {
-      return { error: "Google sign-in is not configured." as string | null, tokenHash: null, email: null };
+      return { error: "Google sign-in is not configured on this deployment (missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET environment variables)." as string | null, tokenHash: null, email: null };
     }
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
