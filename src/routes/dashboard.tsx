@@ -124,7 +124,17 @@ function useRows<T>(table: string, userId: string | undefined, columns: string, 
     queryKey: [table, userId],
     enabled: Boolean(userId),
     queryFn: async () => {
-      const { data, error } = await supabase
+      const client = supabase as unknown as {
+        from: (t: string) => {
+          select: (c: string) => {
+            order: (
+              o: string,
+              opts: { ascending: boolean },
+            ) => Promise<{ data: unknown; error: { message: string } | null }>;
+          };
+        };
+      };
+      const { data, error } = await client
         .from(table)
         .select(columns)
         .order(order, { ascending: false });
