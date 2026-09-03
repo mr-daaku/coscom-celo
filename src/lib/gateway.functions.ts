@@ -488,6 +488,7 @@ export const submitPaymentTx = createServerFn({ method: "POST" })
       | null;
     if (!payment) throw new Error("Payment not found.");
     if (payment.status === "paid") return { status: "paid" as const };
+    if (payment.coin === g.ANY_ASSET) throw new Error("Select a coin and network before paying.");
     if (new Date(payment.expires_at) < new Date()) {
       await g.table(client, "payments").update({ status: "expired" }).eq("id", payment.id);
       throw new Error("This payment window has expired.");
