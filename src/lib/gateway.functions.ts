@@ -411,6 +411,59 @@ export const getPaymentByReference = createServerFn({ method: "POST" })
     return row as PublicPaymentDTO;
   });
 
+/** Supported asset codes, for checkout and dashboard pickers. */
+export const listAssetCodes = createServerFn({ method: "GET" }).handler(async () => {
+  const g = await import("./gateway.server");
+  return { assets: g.ASSET_CODES, allChainCode: g.ALL_CHAIN_CODE, anyAsset: g.ANY_ASSET };
+});
+
+/** An all-chain invoice lets the payer bind the asset at checkout time. */
+export const selectPaymentAsset = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z.object({ reference, asset: z.string().trim().min(2).max(24) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const g = await import("./gateway.server");
+    const client = await g.admin();
+    const limited = await g.rateLimit(`payasset:${data.reference}`, 20, 600);
+    if (!limited.allowed) throw new Error("Too many attempts. Try again shortly.");
+
+    const { data: row } = await g
+      .table(client, "payments")
+      .select("id, user_id, amount_usd, coin, status, expires_at")
+      .eq("reference", data.reference)
+      .maybeSingle();
+    const payment = row as
+      | { id: string; user_id: string; amount_usd: number; coin: string; status: string; expires_at: string }
+      | null;
+    if (!payment) throw new Error("Payment not found.");
+    if (payment.status !== "pending") throw new Error("This payment can no longer change asset.");
+    if (new Date(payment.expires_at) < new Date()) throw new Error("This payment window has expired.");
+    if (payment.coin !== g.ANY_ASSET) throw new Error("This invoice is already locked to one asset.");
+
+    const resolved = g.resolveAssetCode(data.asset);
+    if (resolved.kind === "any") throw new Error("Pick a specific coin and network.");
+    const asset = g.assetFor(resolved.coin, resolved.chain);
+    if (!asset) throw new Error("Unsupported asset.");
+
+    const price = await g.priceUsd(asset.cgId);
+    const { data: updated, error } = await g
+      .table(client, "payments")
+      .update({
+        coin: asset.coin,
+        chain: asset.chain,
+        crypto_amount: Number((Number(payment.amount_usd) / price).toFixed(asset.decimals)),
+        deposit_address: await g.depositAddress(payment.user_id, asset.chain),
+      })
+      .eq("id", payment.id)
+      .select(
+        "reference, amount_usd, coin, chain, crypto_amount, deposit_address, status, expires_at, description, tx_hash",
+      )
+      .single();
+    if (error) throw new Error(error.message);
+    return updated as PublicPaymentDTO;
+  });
+
 /** A payer submits their transaction hash; we verify it on-chain before settling. */
 export const submitPaymentTx = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ reference, tx_hash: txHash }).parse(input))
