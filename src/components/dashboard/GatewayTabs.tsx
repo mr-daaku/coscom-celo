@@ -289,17 +289,6 @@ export function WithdrawalsTab() {
     onError: (e) => setError(errText(e)),
   });
 
-  const remove = useMutation({
-    mutationFn: (id: string) => deletePayment({ data: { id } }),
-    onSuccess: () => {
-      setError(null);
-      void qc.invalidateQueries({ queryKey: ["charges"] });
-      void qc.invalidateQueries({ queryKey: ["merchant-overview"] });
-      void qc.invalidateQueries({ queryKey: ["transactions"] });
-    },
-    onError: (e) => setError(errText(e)),
-  });
-
   const plan = overview.data?.plan;
   const balance = overview.data?.stats.balanceUsd ?? 0;
 
