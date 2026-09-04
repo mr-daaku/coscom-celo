@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Github, Linkedin, MessageCircle, Twitter } from "lucide-react";
 
 import logo from "@/assets/logo.png";
+import { APP_VERSION } from "@/lib/version";
 
 const COLUMNS = [
   {
@@ -58,7 +59,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-6 sm:flex-row">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} CosComPay. All rights reserved.
+            © {new Date().getFullYear()} CosComPay. All rights reserved. · v{APP_VERSION}
           </p>
           <div className="flex items-center gap-2 text-muted-foreground">
             {[Github, Twitter, MessageCircle, Linkedin].map((Icon, i) => (

@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { money } from "@/lib/plans";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -152,7 +153,8 @@ function AdminPage() {
       <div className="flex items-center gap-3">
         <ShieldCheck className="size-6 text-primary" />
         <h1 className="font-fraunces text-2xl font-bold sm:text-3xl">Admin console</h1>
-        <Button variant="outline" size="sm" className="ml-auto" asChild>
+        <Badge variant="outline" className="ml-auto">v{APP_VERSION}</Badge>
+        <Button variant="outline" size="sm" asChild>
           <Link to="/dashboard" search={{ tab: "overview" }}>Dashboard</Link>
         </Button>
       </div>

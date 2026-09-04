@@ -26,7 +26,7 @@ import {
   Trash2,
   Wallet,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import logo from "@/assets/logo.png";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ import { initials, useAuth } from "@/lib/auth";
 import { CHAINS, checkChainTransaction, type ChainId } from "@/lib/chain.functions";
 import { PERMISSIONS } from "@/lib/coscom";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -167,6 +168,11 @@ function DashboardPage() {
   });
   const isAdmin = adminCheck.data?.admin ?? false;
 
+  // Platform owner never sees the merchant workspace — straight to the admin console.
+  useEffect(() => {
+    if (isAdmin) void navigate({ to: "/admin", replace: true });
+  }, [isAdmin, navigate]);
+
 
   if (!ready) {
     return (
@@ -255,6 +261,7 @@ function DashboardPage() {
               <p className="truncate text-xs text-muted-foreground">{email}</p>
             </div>
           </div>
+          <p className="mt-3 text-[11px] text-muted-foreground">CosComPay v{APP_VERSION}</p>
           <Button
             variant="outline"
             className="mt-3 w-full gap-2"
