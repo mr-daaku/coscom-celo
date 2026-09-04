@@ -212,7 +212,7 @@ function LandingPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-background text-foreground relative isolate">
+    <main className="min-h-screen overflow-x-hidden bg-background text-foreground relative isolate">
       <SpotlightBackground />
       <Header />
 
