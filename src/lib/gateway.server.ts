@@ -314,7 +314,7 @@ export const PLAN_PAYMENT_ASSET = { coin: "USDT", chain: "TRON" };
 export async function assertPaymentAllowed(userId: string, amountUsd: number) {
   const account = await getAccount(userId);
   if (account.suspended) throw new Error("This account is suspended. Contact support.");
-  const plan = effectivePlan(account);
+  const plan = await effectivePlan(account);
   if (amountUsd > plan.maxPaymentUsd) {
     throw new Error(
       `Your ${plan.name} plan allows payments up to $${plan.maxPaymentUsd.toLocaleString()}. Upgrade to accept more.`,
