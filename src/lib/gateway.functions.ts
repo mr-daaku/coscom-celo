@@ -509,32 +509,19 @@ export const submitPaymentTx = createServerFn({ method: "POST" })
       throw new Error(check.message);
     }
 
-    const { data: updated } = await g
-      .table(client, "payments")
-      .update({
-        status: "paid",
-        tx_hash: data.tx_hash,
-        paid_at: new Date().toISOString(),
-        confirmations: check.confirmations ?? 1,
-      })
-      .eq("id", payment.id)
-      .select("*")
-      .single();
+    // Atomic settlement: marks paid, credits the balance and records the
+    // transaction in one locked database step (idempotent on retries).
+    const { data: settled, error: settleError } = await (
+      client as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> }
+    ).rpc("settle_payment", {
+      p_payment_id: payment.id,
+      p_tx_hash: data.tx_hash,
+      p_confirmations: check.confirmations ?? 1,
+    });
+    if (settleError) throw new Error(settleError.message);
 
     const account = await g.getAccount(payment.user_id);
-    await g.sendWebhook(account, "payment.paid", updated);
-    await g.table(client, "transactions").insert({
-      user_id: payment.user_id,
-      chain: payment.chain,
-      coin: payment.coin,
-      amount: String((updated as { crypto_amount: number | null }).crypto_amount ?? 0),
-      usd_value: payment.amount_usd,
-      direction: "in",
-      to_address: payment.deposit_address,
-      tx_hash: data.tx_hash,
-      status: "confirmed",
-      confirmed_at: new Date().toISOString(),
-    });
+    await g.sendWebhook(account, "payment.paid", settled);
     return { status: "paid" as const };
   });
 
@@ -578,3 +565,21 @@ async function verifyOnChain(
   }
   return { ok: true, message: "Confirmed", confirmations: 1 };
 }
+
+
+/** Merchants can delete their own unpaid payment links. */
+export const deletePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const g = await import("./gateway.server");
+    const client = await g.admin();
+    const { data: ok, error } = await (
+      client as unknown as {
+        rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("delete_payment", { p_payment_id: data.id, p_user_id: context.userId });
+    if (error) throw new Error(error.message);
+    if (!ok) throw new Error("Only unpaid payment links can be deleted.");
+    return { ok: true };
+  });
