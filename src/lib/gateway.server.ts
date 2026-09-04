@@ -2,7 +2,7 @@
  * Server-only gateway core: pricing, API key authentication, rate limiting,
  * webhook signing and plan enforcement. Never import this from components.
  */
-import { PLANS, planOf, type Plan, type PlanId } from "./plans";
+import { PLANS, type Plan, type PlanId } from "./plans";
 
 export type AdminClient = Awaited<
   typeof import("@/integrations/supabase/client.server")
