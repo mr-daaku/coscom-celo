@@ -302,6 +302,45 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_settings: {
+        Row: {
+          api_keys: number
+          created_at: string
+          fee_percent: number
+          max_payment_usd: number
+          min_withdraw_usd: number
+          monthly_volume_usd: number
+          plan: string
+          price_usd: number
+          updated_at: string
+          withdraw_fee_percent: number
+        }
+        Insert: {
+          api_keys?: number
+          created_at?: string
+          fee_percent?: number
+          max_payment_usd?: number
+          min_withdraw_usd?: number
+          monthly_volume_usd?: number
+          plan: string
+          price_usd?: number
+          updated_at?: string
+          withdraw_fee_percent?: number
+        }
+        Update: {
+          api_keys?: number
+          created_at?: string
+          fee_percent?: number
+          max_payment_usd?: number
+          min_withdraw_usd?: number
+          monthly_volume_usd?: number
+          plan?: string
+          price_usd?: number
+          updated_at?: string
+          withdraw_fee_percent?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

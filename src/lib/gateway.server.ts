@@ -2,7 +2,7 @@
  * Server-only gateway core: pricing, API key authentication, rate limiting,
  * webhook signing and plan enforcement. Never import this from components.
  */
-import { PLANS, planOf, type Plan, type PlanId } from "./plans";
+import { PLANS, type Plan, type PlanId } from "./plans";
 
 export type AdminClient = Awaited<
   typeof import("@/integrations/supabase/client.server")
@@ -124,13 +124,63 @@ export type AccountRow = {
   suspended: boolean;
 };
 
+type PlanSettingsRow = {
+  plan: string;
+  price_usd: number;
+  fee_percent: number;
+  withdraw_fee_percent: number;
+  monthly_volume_usd: number;
+  max_payment_usd: number;
+  api_keys: number;
+  min_withdraw_usd: number;
+};
+
+let planCache: { at: number; map: Record<PlanId, Plan> } | undefined;
+
+/** Plan catalogue with admin overrides applied (falls back to the static defaults). */
+export async function planCatalogue(): Promise<Record<PlanId, Plan>> {
+  if (planCache && Date.now() - planCache.at < 30_000) return planCache.map;
+  const map: Record<PlanId, Plan> = {
+    free: { ...PLANS.free },
+    cos: { ...PLANS.cos },
+    core: { ...PLANS.core },
+  };
+  try {
+    const client = await admin();
+    const { data } = await table(client, "plan_settings").select("*");
+    for (const row of ((data as PlanSettingsRow[] | null) ?? [])) {
+      const id = row.plan as PlanId;
+      if (!map[id]) continue;
+      map[id] = {
+        ...map[id],
+        priceUsd: Number(row.price_usd),
+        feePercent: Number(row.fee_percent),
+        withdrawFeePercent: Number(row.withdraw_fee_percent),
+        monthlyVolumeUsd: Number(row.monthly_volume_usd),
+        maxPaymentUsd: Number(row.max_payment_usd),
+        apiKeys: Number(row.api_keys),
+        minWithdrawUsd: Number(row.min_withdraw_usd),
+      };
+    }
+  } catch {
+    // fall back to static defaults
+  }
+  planCache = { at: Date.now(), map };
+  return map;
+}
+
+export function invalidatePlanCache() {
+  planCache = undefined;
+}
+
 /** Effective plan: a paid plan past its expiry falls back to Free. */
-export function effectivePlan(account: AccountRow): Plan {
+export async function effectivePlan(account: AccountRow): Promise<Plan> {
+  const map = await planCatalogue();
   if (account.plan !== "free") {
     const expired = account.plan_expires_at ? new Date(account.plan_expires_at) < new Date() : true;
-    if (expired || account.plan_status !== "active") return PLANS.free;
+    if (expired || account.plan_status !== "active") return map.free;
   }
-  return planOf(account.plan);
+  return map[(account.plan as PlanId) ?? "free"] ?? map.free;
 }
 
 export async function monthlyVolumeUsd(userId: string): Promise<number> {
@@ -264,7 +314,7 @@ export const PLAN_PAYMENT_ASSET = { coin: "USDT", chain: "TRON" };
 export async function assertPaymentAllowed(userId: string, amountUsd: number) {
   const account = await getAccount(userId);
   if (account.suspended) throw new Error("This account is suspended. Contact support.");
-  const plan = effectivePlan(account);
+  const plan = await effectivePlan(account);
   if (amountUsd > plan.maxPaymentUsd) {
     throw new Error(
       `Your ${plan.name} plan allows payments up to $${plan.maxPaymentUsd.toLocaleString()}. Upgrade to accept more.`,

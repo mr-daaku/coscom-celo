@@ -91,7 +91,7 @@ export const getMerchantOverview = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const g = await import("./gateway.server");
     const account = await g.getAccount(context.userId);
-    const plan = g.effectivePlan(account);
+    const plan = await g.effectivePlan(account);
     const volumeUsd = await g.monthlyVolumeUsd(context.userId);
     const client = await g.admin();
     const { data: isAdmin } = await context.supabase.rpc("has_role" as never, {
@@ -286,7 +286,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     const g = await import("./gateway.server");
     const account = await g.getAccount(context.userId);
     if (account.suspended) throw new Error("This account is suspended.");
-    const plan = g.effectivePlan(account);
+    const plan = await g.effectivePlan(account);
     if (!g.assetFor(data.coin, data.chain)) throw new Error("Unsupported coin/network pair.");
     if (data.amount_usd < plan.minWithdrawUsd) {
       throw new Error(`Minimum withdrawal on the ${plan.name} plan is $${plan.minWithdrawUsd}.`);

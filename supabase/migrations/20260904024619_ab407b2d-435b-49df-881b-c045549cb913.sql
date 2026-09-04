@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.monthly_volume_usd(uuid) FROM anon, authenticated;

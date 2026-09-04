@@ -22,6 +22,7 @@ export type MerchantDTO = {
   plan_expires_at: string | null;
   suspended: boolean;
   created_at: string;
+  email?: string | null;
 };
 
 export type AdminWithdrawalDTO = {
@@ -37,6 +38,31 @@ export type AdminWithdrawalDTO = {
   created_at: string;
 };
 
+export type AdminPaymentDTO = {
+  id: string;
+  user_id: string;
+  reference: string;
+  amount_usd: number;
+  fee_usd: number;
+  coin: string;
+  chain: string;
+  crypto_amount: number | null;
+  status: string;
+  tx_hash: string | null;
+  created_at: string;
+};
+
+export type PlanSettingsDTO = {
+  plan: "free" | "cos" | "core";
+  price_usd: number;
+  fee_percent: number;
+  withdraw_fee_percent: number;
+  monthly_volume_usd: number;
+  max_payment_usd: number;
+  api_keys: number;
+  min_withdraw_usd: number;
+};
+
 export const adminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -46,7 +72,13 @@ export const adminOverview = createServerFn({ method: "GET" })
 
     const [{ data: payments }, { data: withdrawals }, { data: accounts }, { data: plans }] =
       await Promise.all([
-        g.table(client, "payments").select("amount_usd, fee_usd, status, created_at").limit(5000),
+        g
+          .table(client, "payments")
+          .select(
+            "id, user_id, reference, amount_usd, fee_usd, coin, chain, crypto_amount, status, tx_hash, created_at",
+          )
+          .order("created_at", { ascending: false })
+          .limit(500),
         g.table(client, "withdrawals").select("id, user_id, coin, chain, to_address, amount_usd, fee_usd, net_usd, status, created_at").order("created_at", { ascending: false }).limit(200),
         g.table(client, "merchant_accounts").select("*").order("created_at", { ascending: false }).limit(200),
         g.table(client, "plan_payments").select("plan, price_usd, status, created_at").limit(2000),
@@ -56,6 +88,23 @@ export const adminOverview = createServerFn({ method: "GET" })
       (p) => p.status === "paid",
     );
     const planPaid = ((plans as { price_usd: number; status: string }[]) ?? []).filter((p) => p.status === "paid");
+
+    const { data: settings } = await g.table(client, "plan_settings").select("*").order("price_usd", {
+      ascending: true,
+    });
+
+    // Merchant emails come from the Auth admin API; never expose anything else.
+    const emails = new Map<string, string>();
+    try {
+      const { data: userPage } = await client.auth.admin.listUsers({ page: 1, perPage: 200 });
+      for (const u of userPage?.users ?? []) if (u.email) emails.set(u.id, u.email);
+    } catch {
+      // email enrichment is best-effort
+    }
+    const withEmails = (((accounts as MerchantDTO[]) ?? []) as MerchantDTO[]).map((m) => ({
+      ...m,
+      email: emails.get(m.user_id) ?? null,
+    }));
 
     return {
       totals: {
@@ -67,9 +116,38 @@ export const adminOverview = createServerFn({ method: "GET" })
         subscriptionRevenueUsd: planPaid.reduce((s, p) => s + Number(p.price_usd), 0),
         pendingWithdrawals: ((withdrawals as { status: string }[]) ?? []).filter((w) => w.status === "pending").length,
       },
-      merchants: (accounts as MerchantDTO[]) ?? [],
+      merchants: withEmails,
       withdrawals: (withdrawals as AdminWithdrawalDTO[]) ?? [],
+      payments: (payments as AdminPaymentDTO[]) ?? [],
+      planSettings: (settings as PlanSettingsDTO[]) ?? [],
     };
+  });
+
+export const adminUpdatePlanSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        plan: z.enum(["free", "cos", "core"]),
+        price_usd: z.number().min(0).max(100_000),
+        fee_percent: z.number().min(0).max(50),
+        withdraw_fee_percent: z.number().min(0).max(50),
+        monthly_volume_usd: z.number().min(0).max(1_000_000_000),
+        max_payment_usd: z.number().min(1).max(100_000_000),
+        api_keys: z.number().int().min(1).max(500),
+        min_withdraw_usd: z.number().min(0).max(1_000_000),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context as never);
+    const g = await import("./gateway.server");
+    const client = await g.admin();
+    const { plan, ...values } = data;
+    const { error } = await g.table(client, "plan_settings").update(values).eq("plan", plan);
+    if (error) throw new Error(error.message);
+    g.invalidatePlanCache();
+    return { ok: true };
   });
 
 export const adminSetSuspended = createServerFn({ method: "POST" })
