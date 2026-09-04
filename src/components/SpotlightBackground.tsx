@@ -111,7 +111,11 @@ export function SpotlightBackground() {
   // One image, centered, NEVER tiled. On phones/tablets the image is scaled to
   // FIT inside the viewport (`contain`) so it never spills off-screen; desktop
   // keeps the original 90% "framed" look.
-  const imageSize = isMobileLayout ? "contain" : "90%";
+  // On phones the size is derived from the viewport WIDTH only. Using `contain`
+  // (or any height-based size) makes the image grow/shrink while scrolling,
+  // because mobile browsers change the viewport height when the address bar
+  // hides — which reads as the page zooming in and out.
+  const imageSize = isMobileLayout ? "100vw auto" : "90%";
   const revealPct = Math.round(scrollProgress * 100);
 
   const afterMask = isMobileLayout

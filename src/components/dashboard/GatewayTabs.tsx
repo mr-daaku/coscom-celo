@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, Loader2, RefreshCw } from "lucide-react";
+import { Check, Copy, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   confirmPlanPayment,
   createPayment,
+  deletePayment,
   getMerchantOverview,
   requestWithdrawal,
   rotateWebhookSecret,
@@ -113,6 +114,17 @@ export function ChargesTab() {
     onError: (e) => setError(errText(e)),
   });
 
+  const remove = useMutation({
+    mutationFn: (id: string) => deletePayment({ data: { id } }),
+    onSuccess: () => {
+      setError(null);
+      void qc.invalidateQueries({ queryKey: ["charges"] });
+      void qc.invalidateQueries({ queryKey: ["merchant-overview"] });
+      void qc.invalidateQueries({ queryKey: ["transactions"] });
+    },
+    onError: (e) => setError(errText(e)),
+  });
+
   const plan = overview.data?.plan;
 
   return (
@@ -174,6 +186,7 @@ export function ChargesTab() {
               <th className="p-4">Fee</th>
               <th className="p-4">Net</th>
               <th className="p-4">Status</th>
+              <th className="p-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -186,6 +199,19 @@ export function ChargesTab() {
                 </td>
                 <td className="p-4">{money(Number(c.fee_usd))}</td>
                 <td className="p-4">{money(Number(c.net_usd))}</td>
+                <td className="p-4 text-right">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-destructive"
+                    aria-label={`Delete payment link ${c.reference}`}
+                    disabled={c.status === "paid" || remove.isPending}
+                    title={c.status === "paid" ? "Paid payments cannot be deleted" : "Delete payment link"}
+                    onClick={() => remove.mutate(c.id)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </td>
                 <td className="p-4">
                   <Badge variant="outline">{c.status}</Badge>
                 </td>

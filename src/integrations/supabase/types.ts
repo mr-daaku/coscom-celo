@@ -526,6 +526,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_payment: {
+        Args: { p_payment_id: string; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -534,6 +538,41 @@ export type Database = {
         Returns: boolean
       }
       monthly_volume_usd: { Args: { _user_id: string }; Returns: number }
+      settle_payment: {
+        Args: {
+          p_confirmations?: number
+          p_payment_id: string
+          p_tx_hash: string
+        }
+        Returns: {
+          amount_usd: number
+          chain: string
+          coin: string
+          confirmations: number
+          created_at: string
+          crypto_amount: number | null
+          customer_email: string | null
+          deposit_address: string
+          description: string | null
+          expires_at: string
+          fee_percent: number
+          fee_usd: number
+          id: string
+          metadata: Json
+          net_usd: number
+          paid_at: string | null
+          reference: string
+          status: string
+          tx_hash: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "merchant"
